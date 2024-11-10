@@ -1,9 +1,8 @@
-import React from 'react'
 
-const DashboardAsideSelec = (props) => {
+const DashboardAsideSelec = (option) => {
   return (
     <li>
-      <i className="">{props.option}</i></li>
+      <i className="option">{option}</i></li>
   )
 }
 

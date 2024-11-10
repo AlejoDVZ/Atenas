@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import './UserDashboard.css';
 import DashboardAsideSelec from './DashboardAsideSelec';
+import {Link,NavLink, redirect, redirectDocument} from "react-router-dom";
  // Asegúrate de tener este archivo en tu proyecto
 
 export default function UserDashboard() {
@@ -13,8 +14,9 @@ export default function UserDashboard() {
   ]);
 
   const handleLogout = () => {
-    // Implementar lógica de cierre de sesión
+    
     console.log('Usuario cerró sesión');
+    return redirect("/Login");
   };
 
   return (
@@ -25,21 +27,27 @@ export default function UserDashboard() {
         </div>
         <div className="user-info">
           <span>{currentUser}</span>
+          
           <button onClick={handleLogout}>
-            <img src="/public/" alt="" />
+            <Link to={'/Login'}>
+              <img className='logout' src={"/public/logout.svg"} alt="" />
+            </Link> 
           </button>
+        
+          
         </div>
       </header>
       <div className="dashboard-content">
         <aside className="dashboard-aside">
-          <nav>
-            <ul>
-              <DashboardAsideSelec option="dashboard"/>
-              <DashboardAsideSelec option="Reportes"/>
-              <DashboardAsideSelec option="Inventario"/>
-              <DashboardAsideSelec option="Calendario"/>
-            </ul>
-          </nav>
+          <NavLink>
+            <Link>
+              Dashboard
+            </Link>
+            <br />
+            <Link>
+              Inventario
+            </Link>
+          </NavLink>
         </aside>
         <main className="dashboard-main">
           <h2>Casos Actuales</h2>

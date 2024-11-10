@@ -31,11 +31,18 @@
 
 .user-info span {
   margin-right: 10px;
+  font-size: large;
 }
 .user-info button{
-  
+  width: 75px;
+  height: 50px;
 }
-
+.user-info button img{
+  width: 50%;
+}
+button{
+  cursor: pointer;
+}
 .dashboard-content {
   display: flex;
   flex: 1;
@@ -83,10 +90,11 @@
 }
 
 .case-card {
+  color: #2b2b2b;
   border: 1px solid #ddd;
   border-radius: 4px;
   padding: 15px;
-  background-color: #fff;
+  background-color: #dadada;
 }
 
 .case-card.private {
@@ -99,4 +107,8 @@
 
 .case-card h3 {
   margin-top: 0;
+}
+.case-card p{
+  text-align: left;
+  margin-left: 0;
 }

@@ -13,8 +13,9 @@
     justify-self: center;
 }
 .logo{
+
     align-self: flex-start;
-    aspect-ratio: 150px;
+    height: 100px;
 }
 
 .formulario{
@@ -63,12 +64,17 @@ form button{
     border-width: 0;
     border-radius: 10px;
     text-transform: none;
+    text-decoration: none;
     padding: 5px;
-    box-shadow: rgba(124, 212, 253, 1) 5px 5px 30px -3px;
+    box-shadow: rgba(124, 212, 253, 1) 0px 0px 15px -3px;
     cursor: pointer;
     transition: background-color 0.3s, transform 0.2s;
 }
 form button:hover{
     background-color: #0056b3; 
     transform: scale(1.05); 
+}
+form button a{
+    text-decoration: none;
+    color: inherit;
 }
