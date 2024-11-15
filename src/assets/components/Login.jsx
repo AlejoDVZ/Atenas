@@ -20,22 +20,19 @@ export const Login = () => {
         }
         try {
             console.log(email,password)
-            const response = await fetch('http:/localhost:3300//login', { 
+            const response = await fetch('http://localhost:3300/login', { 
                 method: 'POST',
                 headers: {
-                    'Access-Control-Allow-Origin': '*',
                     'Content-Type': 'application/json',
-                
                 },
                 body: JSON.stringify({ username: email, password }), 
             });
-        if (!response.ok) {
+            if (!response.ok) {
                 throw new Error('Error en la autenticación'); // Manejo de errores
             }
             const data = await response.json();
             console.log(data); 
-
-            // localStorage.setItem('token', data.token); // Si tu servidor devuelve un token
+            localStorage.setItem('token', data.token); 
             navigate('/dashboard');
         } catch (error) {
             console.error('Error:', error);
