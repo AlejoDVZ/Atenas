@@ -1,8 +1,7 @@
 
 import { useState } from "react";
-import { Link,useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./Login.css"
-
 
 export const Login = () => {
 
@@ -12,44 +11,39 @@ export const Login = () => {
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
-
-        e.preventDefault(); // Previene la acción por defecto del formulario
-        // Validar que los campos no estén vacíos
+        e.preventDefault(); 
         if (!email || !password) {
             setError('Campos incompletos');
             console.log(error)
             alert('Por favor, complete todos los campos.');
-             // Mensaje de error
             return;
         }
-        // Aquí puedes hacer la solicitud a la API
         try {
-            const response = await fetch('localhost:3300/login', { // Asegúrate de usar la URL correcta
+            console.log(email,password)
+            const response = await fetch('http:/localhost:3300//login', { 
                 method: 'POST',
                 headers: {
+                    'Access-Control-Allow-Origin': '*',
                     'Content-Type': 'application/json',
+                
                 },
-                body: JSON.stringify({ username: email, password }), // Asegúrate de enviar 'username' en lugar de 'email'
+                body: JSON.stringify({ username: email, password }), 
             });
-            if (!response.ok) {
+        if (!response.ok) {
                 throw new Error('Error en la autenticación'); // Manejo de errores
             }
             const data = await response.json();
-            console.log(data); // Procesamos la respuesta
-            // Aquí puedes guardar el token o la información que necesites
+            console.log(data); 
 
             // localStorage.setItem('token', data.token); // Si tu servidor devuelve un token
-
-            // Redirigir al dashboard
             navigate('/dashboard');
         } catch (error) {
             console.error('Error:', error);
-            setError('Credenciales inválidas'); // Establece el mensaje de error
+            setError('Credenciales inválidas'); 
             alert(error)
         }
     };
     
-
   return (
     <>
     <div className="logo-container">

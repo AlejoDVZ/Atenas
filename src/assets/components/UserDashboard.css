@@ -51,7 +51,20 @@ button{
 .dashboard-aside {
   width: 200px;
   background-color: #333;
+}
+.dashboard-aside a{
+  display: inline-block;
+  text-decoration: none;
   color: white;
+  background-color: #f43232;
+  list-style: none;
+  font-size: x-large ;
+  width: 100%;
+  padding: 5 0px;
+  transition: 500ms;
+}
+.dashboard-aside a:hover{
+background-color: aqua;
 }
 
 .dashboard-aside ul {
@@ -111,4 +124,16 @@ button{
 .case-card p{
   text-align: left;
   margin-left: 0;
+}
+.noCases{
+  width: 100%;
+  background-color:rgb(116, 116, 115);
+  opacity:40%;
+  border-radius: 5px;
+  height: 80%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }

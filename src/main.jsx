@@ -4,15 +4,26 @@ import './index.css'
 import App from './App.jsx'
 import Dashboard from './assets/components/UserDashboard.jsx'
 import {createBrowserRouter,RouterProvider} from "react-router-dom"
+import ControlPanel from './assets/components/DashboardAdmin.jsx'
+import PanelControl from './assets/components/PanelControl.jsx'
 
 const router = createBrowserRouter([
   {
-    path:"/Login",
+    path:"/",
     element: <App/>
   },
   {
     path:"/Dashboard",
     element: <Dashboard/>
+  },
+  {
+    path:"/cp",
+    element: <ControlPanel/>
+  }
+  ,
+  {
+    path:"/test",
+    element: <PanelControl/>
   }
 ])
 
