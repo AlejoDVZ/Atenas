@@ -23,7 +23,7 @@
     justify-content: center;
     align-content: center;
 }
-form{
+.formulario form{
     background-color: rgb(94, 93, 93);
     width: 60%;
     height: 375px;

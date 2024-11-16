@@ -30,8 +30,7 @@ export const Login = () => {
             if (!response.ok) {
                 throw new Error('Error en la autenticación'); // Manejo de errores
             }
-            const data = await response.json();
-            console.log(data); 
+            const data = await response.json(); 
             localStorage.setItem('token', data.token); 
             navigate('/dashboard');
         } catch (error) {
