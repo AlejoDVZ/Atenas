@@ -12,14 +12,13 @@ export default function UserDashboard() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [documentTypes, setDocumentTypes] = useState([]);
   const [educationLevels, setEducationLevels] = useState([]);
-  const [statusOptions, setStatusOptions] = useState([]);
+ /* const [statusOptions, setStatusOptions] = useState([]);*/
   const [newCase, setNewCase] = useState({
     numberCausa: '',
     dateB: '',
     dateA: '',
     tribunalRecord: '',
     calification: '',
-    status: '',
     defendants: [{ 
       name: '', 
       lastname: '', 
@@ -48,7 +47,7 @@ export default function UserDashboard() {
     if (userID) {
       fetchDocumentTypes();
       fetchEducationLevels();
-      fetchStatusOptions();
+      /*fetchStatusOptions();*/
     }
   }, [userID]);
   const LoadCases = async () => {
@@ -118,7 +117,7 @@ export default function UserDashboard() {
       console.error('Error fetching education levels:', error);
     }
   };
-  const fetchStatusOptions = async () => {
+  /*const fetchStatusOptions = async () => {
     try {
       const response = await fetch('http://localhost:3300/common/status',{
         method: 'GET'
@@ -128,43 +127,66 @@ export default function UserDashboard() {
     } catch (error) {
       console.error('Error fetching status:', error);
     }
+  };*/
+  const handleRemoveDefendant = (index) => {
+    const updatedDefendants = newCase.defendants.filter((_, i) => i !== index);
+    setNewCase({ ...newCase, defendants: updatedDefendants });
   };
   const handleSubmit = async (event) => {
-
     event.preventDefault();
-    const existingCaseResponse = await fetch(`http://localhost:3300/cases/${newCase.numberCausa}`);
-    const existingCase = await existingCaseResponse.json();
+    try {
+      const existingCaseResponse = await fetch(`http://localhost:3300/cases/${newCase.numberCausa}`);
+      const existingCase = await existingCaseResponse.json();
+      console.log(existingCase);
 
-    if (existingCase) {
-      await fetch(`http://localhost:3300/case/${newCase.numberCausa}/activate`, { method: 'PUT' });
-    }else {
-      const response = await fetch('http://localhost:3300/newcase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newCase),
-      });
-      if (response.ok) {
-        const createdCase = await response.json();
-        await Promise.all(newCase.defendidos.map(defendido => {
-          return fetch('http://localhost:3300/defendidos', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...defendido, caseId: createdCase.id }), // Asegúrate de que el ID del caso se envíe
-          });
-        }));
-      }else{
-        console.log('something go wrong')
+      if (existingCase) {
+        alert('El caso ya existe.');
+      } else {
+        const { defendants, ...caseWithoutDefendants } = newCase;
+        const response = await fetch('http://localhost:3300/cases/newcase', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(caseWithoutDefendants),
+        });
+
+        if (response.ok) {
+          const createdCase = await response.json();
+          await Promise.all(newCase.defendants.map(defendant => {
+            return fetch('http://localhost:3300/api/defendants', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ...defendant, caseId: createdCase.id }),
+            });
+          }));
+          alert('Nuevo caso creado con éxito.');
+        } else {
+          throw new Error('Error al crear el caso');
+        }
       }
+
+      setNewCase({
+        numberCausa: '',
+        dateB: '',
+        dateA: '',
+        tribunalRecord: '',
+        calification: '',
+        status: '',
+        defendants: [{ 
+          name: '', 
+          lastname: '', 
+          typeDocument: '', 
+          document: '', 
+          birth: '', 
+          education: '', 
+          captureOrder: false 
+        }],
+      });
+      setIsFormOpen(false);
+      LoadCases();
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Ocurrió un error al procesar la solicitud.');
     }
-    setNewCase({
-      numberCausa: '',
-      fechaInicio: '',
-      fechaAceptacion: '',
-      calificacion: '',
-      estatus: '',
-      defendidos: [{ nombre: '', apellido: '', tipoDocumento: '', numeroDocumento: '', fechaNacimiento: '', nivelEducacion: '', ordenCaptura: false }],
-    });
-    LoadCases(); 
   };
 
   return (
@@ -228,7 +250,7 @@ export default function UserDashboard() {
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="tribunalRecord">Registro del Tribunal:</label>
+                    <label htmlFor="tribunalRecord">Numero de Expediente del Tribunal:</label>
                     <input
                       type="text"
                       id="tribunalRecord"
@@ -238,7 +260,7 @@ export default function UserDashboard() {
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="calification">Calificación:</label>
+                    <label htmlFor="calification">Calificación Juridica:</label>
                     <input
                       type="text"
                       id="calification"
@@ -246,20 +268,6 @@ export default function UserDashboard() {
                       onChange={(e) => setNewCase({...newCase, calification: e.target.value})}
                       required
                     />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="status">Estatus:</label>
-                    <select
-                      id="status"
-                      value={newCase.status}
-                      onChange={(e) => setNewCase({...newCase, status: e.target.value})}
-                      required
-                    >
-                      <option value="">Seleccione un estatus</option>
-                      {statusOptions.map((option) => (
-                        <option key={option.id} value={option.id}>{option.state}</option>
-                      ))}
-                    </select>
                   </div>
 
                   <h4>Defendidos</h4>
@@ -344,6 +352,11 @@ export default function UserDashboard() {
                           />
                           Orden de Captura
                         </label>
+                        {index > 0 && (
+                      <button type="button" onClick={() => handleRemoveDefendant(index)} className="remove-defendant-btn">
+                        Eliminar defendido
+                      </button>
+                    )}
                       </div>
                     </div>
                   ))}
@@ -352,7 +365,26 @@ export default function UserDashboard() {
                   </button>
                   <button type="submit" className="submit-btn">Guardar Caso</button>
                 </form>
-                <button className="close-button" onClick={() => setIsFormOpen(false)}>Cerrar</button>
+                <button className="close-button" onClick={() => {
+              setIsFormOpen(false);
+              setNewCase({
+                numberCausa: '',
+                dateB: '',
+                dateA: '',
+                tribunalRecord: '',
+                calification: '',
+                status: '',
+                defendants: [{ 
+                  name: '', 
+                  lastname: '', 
+                  typeDocument: '', 
+                  document: '', 
+                  birth: '', 
+                  education: '', 
+                  captureOrder: false 
+                }],
+              });
+            }}>Cerrar</button>
               </div>
             </div>
           )}
@@ -378,8 +410,14 @@ export default function UserDashboard() {
             ))}
             {SelectedCase && (
                <div className="modal">
-               <div className="modal-content">
+               <div className="case-detail">
                <h3>Caso #{SelectedCase.numberCausa}</h3>
+                <p>Fecha de inicio: {SelectedCase.dateB}</p>
+                <p>Fecha de aceptación: {SelectedCase.dateA}</p>
+                <p>Registro del Tribunal: {SelectedCase.tribunalRecord}</p>
+                <p>Calificación: {SelectedCase.calification}</p>
+                <h4>Defendidos:</h4>
+                
                  <button className="close-button" onClick={() => setSelectedCase(null)}>Cerrar</button>
                </div>
              </div>

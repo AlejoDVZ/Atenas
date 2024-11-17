@@ -23,6 +23,7 @@
     background: none;
     cursor: pointer;
     font-size: 16px;
+    color: antiquewhite;
   }
   
   .tab.active {
