@@ -91,12 +91,6 @@ background-color: rgb(0, 115, 255);
   background-color: #dadada;
   cursor: pointer;
 }
-.case-detail{
-  background-color: #fff;
-  color: #333;
-  width: 1200px;
-  height: 500px;
-}
 .case-card h3 {
   margin-top: 0;
 }
@@ -180,4 +174,160 @@ background-color: rgb(0, 115, 255);
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
+  transition: 0,5s;
+}
+
+.case-detail {
+  background-color: white;
+  color: #2b2b2b;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 1200px;
+  height: 90vh;
+  padding: 2rem;
+  position: relative;
+  overflow-y: auto;
+}
+
+.case-detail-header {
+  margin-bottom: 2rem;
+}
+
+.case-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-active {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.report-button {
+  background-color: #3b82f6;
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+.case-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.case-info-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.info-group {
+  margin-bottom: 1.5rem;
+}
+
+.info-group label {
+  display: block;
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.info-group p {
+  font-size: 1rem;
+  color: #111827;
+  margin: 0;
+}
+
+.proceedings-section {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 2rem;
+}
+
+.proceedings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.add-proceeding-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #22c55e;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+.proceedings-table {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.proceedings-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.proceedings-table th,
+.proceedings-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.proceedings-table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+}
+
+.document-link {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.document-link:hover {
+  text-decoration: underline;
+}
+
+.proceeding-form {
+  background-color: white;
+  color: #333;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+}
+
+.proceeding-form h3 {
+  margin-bottom: 1.5rem;
+}
+
+.file-input {
+  display: none;
+}
+
+.form-group label[for="attachment"] {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #f3f4f6;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
 }

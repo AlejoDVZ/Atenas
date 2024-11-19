@@ -86,3 +86,13 @@
   .close-button {
     margin-top: 10px;
   }
+  #phone{
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 2rem;
+  }
+  #document{
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 2rem;
+  }
