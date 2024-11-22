@@ -15,7 +15,7 @@ export const Login = () => {
         if (!email || !password) {
             setError('Campos incompletos');
             console.log(error)
-            alert('Por favor, complete todos los campos.');
+            alert('Por favor, complete todos los campos.');9
             return;
         }
         try {
@@ -25,14 +25,19 @@ export const Login = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username: email, password }), 
+                body: JSON.stringify({ email, password }), 
             });
             if (!response.ok) {
                 throw new Error('Error en la autenticación'); // Manejo de errores
             }
             const data = await response.json(); 
             localStorage.setItem('token', data.token); 
-            navigate('/dashboard');
+            if(data.user.role === 5){
+                navigate('/test');
+            }else{
+                navigate('/dashboard');
+            }
+            
         } catch (error) {
             console.error('Error:', error);
             setError('Credenciales inválidas'); 

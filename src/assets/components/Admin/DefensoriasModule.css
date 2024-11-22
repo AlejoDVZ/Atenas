@@ -20,6 +20,8 @@
     border-radius: 4px;
     padding: 15px;
     cursor: pointer;
+    background-color: rgb(105, 105, 105);
+    box-shadow: 0 0 10px rgba(138, 133, 133, 0.5);
   }
   
   .defensoria-card h3 {
@@ -53,7 +55,7 @@
   }
   
   .modal-content {
-    background-color: rgb(33, 33, 33);
+    background-color: rgb(131, 130, 130);
     padding: 20px;
     border-radius: 4px;
     width: 80%;
@@ -76,6 +78,7 @@
   
   .close-button {
     margin-top: 10px;
+    background-color: #007bff;
   }
   
   ul {
@@ -89,4 +92,28 @@
     margin-bottom: 10px;
     display: flex;
     flex-direction: row;
+  }
+  #phone{
+    color: black;
+    grid-template-columns: 1fr 1fr;
+  }
+  #phone label{
+    border-bottom: 3px solid black;
+  }
+  .personal-item{
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    justify-items: center;
+    align-items: center;
+  }
+  .personal-item p{
+    text-align: left;
+  }
+  #delete-button{
+    background-color:crimson;
+    border-style: none;
+    box-shadow: none;
+    border-radius: 3px;
+    color: azure;
+    width: 50%;
   }

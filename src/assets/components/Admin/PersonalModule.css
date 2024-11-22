@@ -55,9 +55,9 @@
   }
   
   .modal-content {
-    background-color: rgb(53, 53, 53);
+    background-color: rgb(153, 152, 152);
     padding: 20px;
-    border-radius: 4px;
+    border-radius: 8px;
     width: 80%;
     max-width: 500px;
     display: flex;
@@ -67,7 +67,7 @@
   
   .modal-content h3 {
     margin-top: 0;
-    color: rgb(18, 18, 18);
+    color: rgb(236, 234, 234);
   }
   
   .modal-content form {
@@ -82,17 +82,19 @@
     margin-bottom: 10px;
     padding: 5px;
   }
-  
-  .close-button {
-    margin-top: 10px;
-  }
-  #phone{
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: 2rem;
-  }
   #document{
     display: grid;
     grid-template-columns: 1fr 2fr;
     gap: 2rem;
+  }
+  #registro-modal{
+    background-color: #868686;
+    box-shadow: 21px 33px 98px -28px rgba(188,188,194,1);
+  }
+  #delete-button{
+    background-color:crimson;
+    border-style: none;
+    box-shadow: none;
+    border-radius: 3px;
+    color: azure;
   }

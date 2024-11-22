@@ -1,9 +1,22 @@
 .container {
+  position: relative;
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
   }
-  
+  #logout{
+  position: absolute;
+  right: 10%;
+  }
+  #logout button{
+    display: flex;
+    position: relative;
+    width: 75px;
+    height: 50px;
+  }
+  #logout button img{
+    width: 60%;
+  }
   .title {
     font-size: 24px;
     font-weight: bold;

@@ -1,46 +1,97 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './DefensoriasModule.css';
 
-const defensoriaMock = [
-  { id: 1, nombre: 'Defensoría 1', personal: [{ id: 1, nombre: 'Juan', apellido: 'Pérez' }] },
-  { id: 2, nombre: 'Defensoría 2', personal: [] },
-];
-
 function DefensoriasModule() {
-  const [defensorias, setDefensorias] = useState(defensoriaMock);
+  const [defensorias, setDefensorias] = useState([{
+    id: '',
+    office: '',
+    number : ''
+  }]);
+  const [newDefensoria,setNewDefensoria] = useState({
+    id: '',
+    number : ''
+  })
   const [selectedDefensoria, setSelectedDefensoria] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  const handleSubmit = (event) => {
+
+  useEffect(()=>{
+    fetchDefensorias();
+  },[]
+  );
+  const fetchDefensorias = async () => {
+    try {
+      const response = await fetch('http://localhost:3300/common/defensorias',{
+        method: 'GET'
+      });
+      const data = await response.json();
+      setDefensorias(data);
+    } catch (error) {
+      console.error('Error fetching status:', error);
+    }
+  };
+  const handleDefensoriaClick = (defensoria) => {
+    setSelectedDefensoria(defensoria);
+    const id = defensoria.id;
+    console.log('este es el id',id)
+    console.log('defensoria pela',defensoria)
+  };
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    const formData = new FormData(event.target);
-    const newDefensoria = {
-      id: defensorias.length + 1,
-      nombre: formData.get('nombre'),
-      personal: [],
-    };
-    setDefensorias([...defensorias, newDefensoria]);
-    setIsFormOpen(false);
-  };
-
-  const handleAddPersonal = (defensoria, personal) => {
-    const updatedDefensorias = defensorias.map(d => {
-      if (d.id === defensoria.id) {
-        return { ...d, personal: [...d.personal, personal] };
+    if (!newDefensoria.number) {
+      alert('Por favor, complete todos los campos.');
+      return;
+    }try{
+      
+    
+      const response = await fetch('http://localhost:3300/register/defensoria', { // Cambia la URL a la de tu API
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          number: newDefensoria.number
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Error en la solicitud');
       }
-      return d;
-    });
-    setDefensorias(updatedDefensorias);
+      setIsFormOpen(false);
+      setNewDefensoria({ number: '' }); // Resetear el formulario
+      fetchDefensorias();
+    } catch (error) {
+      alert(error)
+      console.error('Error al enviar los datos:', error);
+    }
   };
-
-  const handleRemovePersonal = (defensoria, personalId) => {
-    const updatedDefensorias = defensorias.map(d => {
-      if (d.id === defensoria.id) {
-        return { ...d, personal: d.personal.filter(p => p.id !== personalId) };
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setNewDefensoria((prev) => ({ ...prev, [name]: value }));
+  };
+  const handleDelete = async (id) => {
+    if (window.confirm('¿Estás seguro de que quieres borrar esta Defensoria?')) {
+      try {
+        const response = await fetch('http://localhost:3300/delete/defensoria', { 
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id : id
+          }),
+        });
+        if (response.ok) {
+          alert('Defensoria Borrada')
+          fetchDefensorias();
+          setSelectedDefensoria(null);
+        } else {
+          throw new Error('Error al borrar la Defensoria');
+        }
+      } catch (error) {
+        console.error('Error al borrar la Defensoria:', error);
+        alert('Hubo un error al borrar la Defensoria. Por favor, inténtalo de nuevo.');
       }
-      return d;
-    });
-    setDefensorias(updatedDefensorias);
+    }
   };
 
   return (
@@ -49,9 +100,8 @@ function DefensoriasModule() {
       <h2 className="module-title">Gestión de Defensorías</h2>
       <div className="defensorias-grid">
         {defensorias.map((defensoria) => (
-          <div key={defensoria.id} className="defensoria-card" onClick={() => setSelectedDefensoria(defensoria)}>
-            <h3>{defensoria.nombre}</h3>
-            <p>Personal: {defensoria.personal.length}</p>
+          <div key={defensoria.id} className="defensoria-card" onClick={() => handleDefensoriaClick(defensoria)}>
+            <h3>Defensoría: {defensoria.number}</h3>
           </div>
 
         ))}
@@ -62,45 +112,22 @@ function DefensoriasModule() {
           <div className="modal-content">
             <h3>Registrar Defensoría</h3>
             <form onSubmit={handleSubmit}>
-              <input name="nombre" placeholder="Nombre de la Defensoría" required />
+              <div id="phone">
+                <input id='number' name="number" placeholder="Numero de la defensoría" required  //nombre
+                value={newDefensoria.number} onChange={handleChange} />
+              </div>
+              
               <button type="submit">Guardar</button>
             </form>
-            <button className="close-button" onClick={() => setIsFormOpen(false)}>Cerrar</button>
+            <button className="close-button" id='close-button' onClick={() => setIsFormOpen(false)}>Cerrar</button>
           </div>
         </div>
       )}
       {selectedDefensoria && (
         <div className="modal">
           <div className="modal-content">
-            <h3>{selectedDefensoria.nombre}</h3>
-            <h4>Personal Asignado</h4>
-            {selectedDefensoria.personal.length === 0 ? (
-              <p>Esta defensoría no tiene personal registrado.</p>
-            ) : (
-              <ul>
-                {selectedDefensoria.personal.map((persona) => (
-                  <li key={persona.id}>
-                    <p>{persona.nombre} {persona.apellido}</p>
-                    <button onClick={() => handleRemovePersonal(selectedDefensoria, persona.id)}>Eliminar</button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const formData = new FormData(e.target);
-              const newPersonal = {
-                id: Date.now(),
-                nombre: formData.get('nombre'),
-                apellido: formData.get('apellido'),
-              };
-              handleAddPersonal(selectedDefensoria, newPersonal);
-              e.target.reset();
-            }}>
-              <input name="nombre" placeholder="Nombre" required />
-              <input name="apellido" placeholder="Apellido" required />
-              <button type="submit">Agregar Personal</button>
-            </form>
+            <h3>Defensoría: {selectedDefensoria.number}</h3>
+              <button id='delete-button' onClick={() => handleDelete(selectedDefensoria.id)}>Borrar</button>
             <button className="close-button" onClick={() => setSelectedDefensoria(null)}>Cerrar</button>
           </div>
         </div>
