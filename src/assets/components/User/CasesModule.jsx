@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { UploadIcon as FileUpload, Plus } from 'lucide-react';
+import { Edit, UploadIcon as FileUpload, Plus} from 'lucide-react';
 import './CasesModule.css';
 
 
@@ -8,22 +8,23 @@ export default function CasesModule(props) {
   
   const id = props.id;
   const def = props.def
-
+    const [isEditingDefendant, setIsEditingDefendant] = useState(false);
+    const [editingDefendant, setEditingDefendant] = useState(null);
     const [cases, setCases] = useState([]);
     const [fiscalias,setFiscalias] = useState([]);
-    const [detentionCenters, setDetentionCenters] = useState([])
+    const [detentionCenters, setDetentionCenters] = useState([]);
     const [SelectedCase,setSelectedCase] = useState(false);
+    const [defendants, setDefendants] = useState([]);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [documentTypes, setDocumentTypes] = useState([]);
     const [educationLevels, setEducationLevels] = useState([]);
     const [proceedings, setProceedings] = useState([]);
+    const [isLoadingProceedings, setIsLoadingProceedings] = useState(false);
+    const [proceedingsError, setProceedingsError] = useState(null);
     const [newProceeding, setNewProceeding] = useState({
-      realizationDate: '',
       reportDate: '',
       activity: '',
-      result: '',
-      attachmentPath: ''
-    });
+      result: ''});
     const [isActionFormOpen, setIsActionFormOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
    /* const [statusOptions, setStatusOptions] = useState([]);*/
@@ -47,6 +48,8 @@ export default function CasesModule(props) {
       detentionCenter: '',
       detentionDate: ''
     }],});
+
+
     useEffect(() => {
       
         if (def) {
@@ -62,14 +65,48 @@ export default function CasesModule(props) {
     useEffect(() => {
       if (SelectedCase) {
         loadProceedings(SelectedCase.id);
+        loadDefendants(SelectedCase.id)
       }
     }, [SelectedCase]);
-    
-    useEffect(() => {
-      if (SelectedCase) {
-        loadProceedings(SelectedCase.id);
+
+  const loadDefendants = async (caseId) => {
+      try {
+        const response = await fetch(`http://localhost:3300/defendants`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ caso: caseId })
+        });
+        const data = await response.json();
+        setDefendants(data);
+      } catch (error) {
+        console.error('Error loading defendants:', error);
       }
-    }, [SelectedCase]);
+  };
+
+  const handleDefendantUpdate = async (defendantId, updates) => {
+    try {
+      const response = await fetch('http://localhost:3300/update-defendant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ defendantId, ...updates }),
+      });
+      if (response.ok) {
+        loadDefendants(SelectedCase.id);
+      }
+    } catch (error) {
+      console.error('Error updating defendant:', error);
+    }
+  };
+
+  const getLibertyStatus = (defendant) => {
+    if (defendant.stablisment) {
+      return `Detenido en ${defendant.stablisment} desde ${formatDate(defendant.arrestedDate)}`;
+    } else if (defendant.captureOrder) {
+      return "Libre con orden de captura";
+    } else {
+      return "Libre";
+    }
+  };
 
   const fetchFiscalias = async () => {
     try {
@@ -115,7 +152,7 @@ export default function CasesModule(props) {
   } catch (error) {
       console.error('Error:', error);
   }
-    };
+  };
 
   const handleAddDefendant = () => { // agrega otro form de defendido al registro
       setNewCase({
@@ -130,7 +167,7 @@ export default function CasesModule(props) {
           captureOrder: false 
         }],
       });
-    };
+  };
 
   const handleDefendantChange = (index, field, value) => {  //maneje al cambio de valores del formulario de defendidos
     const updatedDefendants = newCase.defendants.map((defendant, i) => {
@@ -236,28 +273,31 @@ export default function CasesModule(props) {
   const handleProceedingSubmit = async (e) => { // manjea el reporte de actuaciones
     e.preventDefault();
     
-    try {
       const formData = new FormData();
+      formData.append('activity', newProceeding.activity);
+      formData.append('reportDate', newProceeding.reportDate);
+      formData.append('result', newProceeding.result);
+      formData.append('caseId', SelectedCase.id);
+      formData.append('userId', id);
+      formData.append('defensoriaId', def);
+    if (selectedFile) {
       formData.append('file', selectedFile);
-      formData.append('proceedingData', JSON.stringify({
-        ...newProceeding,
-        caseId: SelectedCase.id
-      }));
-
-      const response = await fetch('http://localhost:3300/proceedings/new', {
+    }
+      try {
+      const response = await fetch('http://localhost:3300/report', {
         method: 'POST',
         body: formData
       });
 
       if (response.ok) {
+        const result = await response.json();
+        console.log(result.message);
         loadProceedings(SelectedCase.id);
         setIsActionFormOpen(false);
         setNewProceeding({
-          realizationDate: '',
           reportDate: '',
           activity: '',
           result: '',
-          attachmentPath: ''
         });
         setSelectedFile(null);
       }
@@ -266,18 +306,26 @@ export default function CasesModule(props) {
     }
   };
 
-  const loadProceedings = async (caso) => { // carga las actuaciones
+  const loadProceedings = async (caseId) => { // carga las actuaciones
+    console.log('Loading proceedings for case:', caseId);
+    setIsLoadingProceedings(true);
     try {
-      const response = await fetch(`http://localhost:3300/actuaciones`,{
+      const response = await fetch('http://localhost:3300/actuaciones', {
         method: 'POST',
-        body: JSON.stringify({
-          id : caso
-        })
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: caseId }),
       });
       const data = await response.json();
+      console.log(data);
       setProceedings(data);
     } catch (error) {
       console.error('Error loading proceedings:', error);
+      setProceedings([]);
+      setProceedingsError('Error al cargar las actuaciones. Por favor, intente de nuevo.');
+    } finally {
+    setIsLoadingProceedings(false);
     }
   };
 
@@ -294,14 +342,14 @@ export default function CasesModule(props) {
           <h2>Casos Actuales</h2>
           <div className="case-grid">
 
-            {cases.length === 0 && !isFormOpen && (
+            {cases.length === 0 && !isFormOpen && ( //pantalla cuando no hay casos
               <div className='no-cases-message'>
                 <h1>No hay Casos!</h1>
                 <p>Agregue un Caso</p>
               </div>
             )}
             
-            {cases.map(caseItem => (
+            {cases.map(caseItem => (//lista de los casos
             <div className='case-card' key={caseItem.id} onClick={() => setSelectedCase(caseItem)}>
               <h3>Caso #{caseItem.numberCausa}</h3>
               <div className="case-info">
@@ -312,19 +360,23 @@ export default function CasesModule(props) {
                 <p><strong>Fiscalía:</strong> {caseItem.fiscalia}</p>
               </div>
             </div>
-          ))}
+            ))}
 
-            {SelectedCase && (
+            {SelectedCase && ( //vista de detalles del caso
               <div className="modal">
                 <div className="case-detail">
                   <div className="case-detail-header">
                     <div className="case-status">
-                      <h2>Estado: <span className="status-active">Activo</span></h2>
+                      <h2>Estado: <span className="status-active">Activa</span></h2>
                     </div>
+                    <button className="close-button" onClick={() => setSelectedCase(null)}>
+                      Cerrar
+                    </button>
                   </div>
             
-              <div className="case-detail-content">
-                <div className="case-info-section">
+              <div className="case-detail-content">   {/*  Detalles del caso  */}
+                
+                <div className="case-info-section"> {/*  informacion del caso  */}
                   
                   <div className="info-group">
                     <label>Fecha de inicio</label>
@@ -356,154 +408,189 @@ export default function CasesModule(props) {
                     <p>{SelectedCase.tribunalRecord}</p>
                   </div>
                 </div>
-              
+                <div className="defendants-section">{/*  informacion de los defendidos  */}
+                  <h3>Defendidos</h3>
+                  <div className="defendants-grid">
+                {defendants.map((defendant) => {
+                  const educationText = educationLevels.find(level => level.id === defendant.education)?.level || 'N/A';  
+                  return(
+                  <div key={defendant.id} className="defendant-card">
+                    <h4>{defendant.name} {defendant.lastname}</h4>
+                    <p><strong>Documento:</strong> {defendant.typeDocument}-{defendant.document}</p>
+                    <p><strong>Fecha de nacimiento:</strong> {formatDate(defendant.birth)}</p>
+                    <p><strong>Educación:</strong> {educationText}</p>
+                    <p><strong>Estado:</strong> {getLibertyStatus(defendant)}</p>
+                    <button className="edit-button" onClick={() => {
+                      setIsEditingDefendant(true);
+                      setEditingDefendant(defendant);
+                    }}>
+                      <Edit size={16} /> Editar Estado
+                    </button>
+                  </div>)
+                })}
+              </div>
+
+                  {isEditingDefendant && ( //formulario para cambiar estado de libertad
+                    <div className="modal">
+                      <div className="modal-content">
+                        <h2>Editar Estado de {editingDefendant.name} {editingDefendant.lastname}</h2>
+                        <form onSubmit={(e) => {
+                          e.preventDefault();
+                          const formData = new FormData(e.target);
+                          const status = formData.get('status');
+                          const updates = { 
+                            captureOrder: status === 'captureOrder',
+                            stablisment: status === 'detained' ? formData.get('stablisment') : null,
+                            arrestedDate: status === 'detained' ? formData.get('arrestedDate') : null,
+                          };
+                          handleDefendantUpdate(editingDefendant.id, updates);
+                          setIsEditingDefendant(false);
+                        }}>
+                          <div className="form-group">
+                            <label htmlFor="status">Estado</label>
+                            <select 
+                              name="status" 
+                              defaultValue={editingDefendant.stablisment ? 'detained' : (editingDefendant.captureOrder ? 'captureOrder' : 'free')}
+                              onChange={(e) => {
+                                const detainedFields = document.querySelectorAll('.detained-field');
+                                detainedFields.forEach(field => {
+                                  field.style.display = e.target.value === 'detained' ? 'block' : 'none';
+                                });
+                              }}
+                            >
+                              <option value="free">Libre</option>
+                              <option value="captureOrder">Libre con orden de captura</option>
+                              <option value="detained">Detenido</option>
+                            </select>
+                          </div>
+                          <div className="form-group detained-field" style={{display: editingDefendant.stablisment ? 'block' : 'none'}}>
+                            <label htmlFor="stablisment">Centro de Detención</label>
+                            <select name="stablisment">
+                              {detentionCenters.map((center) => (
+                                <option key={center.id} value={center.id}>{center.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-group detained-field" style={{display: editingDefendant.stablisment ? 'block' : 'none'}}>
+                            <label htmlFor="arrestedDate">Fecha de Detención</label>
+                            <input
+                              type="date"
+                              name="arrestedDate"
+                              defaultValue={editingDefendant.arrestedDate}
+                            />
+                          </div>
+                          <div className="form-actions">
+                            <button type="submit" className="submit-button">Guardar Cambios</button>
+                            <button type="button" className="cancel-button" onClick={() => setIsEditingDefendant(false)}>Cancelar</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  )}
+
+                </div>
                 <div className="proceedings-section">
-  <div className="proceedings-header">
-    <h3>Actuaciones</h3>
-    <button 
-      className="add-proceeding-button"
-      onClick={() => setIsActionFormOpen(true)}
-    >
-      <Plus size={20} />
-      Nueva actuación
-    </button>
-  </div>
-  
-  <div className="proceedings-table">
-    {proceedings.length > 0 ? (
-      <table>
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Descripción</th>
-            <th>Documento</th>
-          </tr>
-        </thead>
-        <tbody>
-          {proceedings.map((proceeding) => (
-            <tr key={proceeding.id}>
-              <td>{new Date(proceeding.realizationDate).toLocaleDateString()}</td>
-              <td>{proceeding.activity}</td>
-              <td>
-                {proceeding.attachmentPath && (
-                  <a 
-                    href={`http://localhost:3300/files/${proceeding.attachmentPath}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="document-link"
-                  >
-                    Ver documento
-                  </a>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    ) : (
-      <p className="no-proceedings-message">No hay actuaciones registradas para este caso.</p>
-    )}
-  </div>
-</div>
+                  <div className="proceedings-header">
+                    <h3>Actuaciones</h3>
+                    <button 
+                      className="add-proceeding-button"
+                      onClick={() => setIsActionFormOpen(true)}
+                    >
+                      <Plus size={20} />
+                      Nueva actuación
+                    </button>
+                  </div>
+                
+                  <div className="proceedings-table">  
+                    {isLoadingProceedings ?( //tabla de actuaciones // pantalla de carga
+                      <p className="loading-message">Cargando actuaciones...</p>
+                    ) : proceedingsError ? ( //pantalla de error
+                      <p className="error-message">{proceedingsError}</p>
+                    ) : proceedings.length > 0 ? ( //tabla condicional si existen
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Fecha</th>
+                            <th>Descripción</th>
+                            <th>Documento</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {proceedings.map((proceeding) => ( //lista de actuaciones
+                            <tr key={proceeding.id}>
+                              <td>{new Date(proceeding.dateReport).toLocaleDateString()}</td>
+                              <td>Actividad{proceeding.actividad}</td>
+                              <td>Resultado{proceeding.resultado}</td>
+                              <td>
+                                {proceeding.downloadUrl ? (
+                                  <a href={proceeding.downloadUrl} download>Descargar documento</a>
+                                ) : (
+                                  <span>No hay documento adjunto</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <p className="no-proceedings-message">No hay actuaciones registradas para este caso.</p>
+                    )
+                    }
+                  </div>
+                </div>
             </div>
             
-            <button className="close-button" onClick={() => setSelectedCase(null)}>
-              Cerrar
-            </button>
+            
               </div>
             </div>
             )}
 
-            {isActionFormOpen && (
+            {isActionFormOpen && ( //formulario de reportes
             <div className="modal">
-              <div className="proceeding-form">
-                <h3>Nueva Actuación</h3>
-                <form onSubmit={handleProceedingSubmit}>
-                  <div className="form-group">
-                    <label htmlFor="realizationDate">Fecha de Realización:</label>
-                    <input
-                      type="date"
-                      id="realizationDate"
-                      value={newProceeding.realizationDate}
-                      onChange={(e) => setNewProceeding({
-                        ...newProceeding,
-                        realizationDate: e.target.value
-                      })}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="reportDate">Fecha de Reporte:</label>
-                    <input
-                      type="date"
-                      id="reportDate"
-                      value={newProceeding.reportDate}
-                      onChange={(e) => setNewProceeding({
-                        ...newProceeding,
-                        reportDate: e.target.value
-                      })}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="activity">Actividad:</label>
-                    <textarea
-                      id="activity"
-                      value={newProceeding.activity}
-                      onChange={(e) => setNewProceeding({
-                        ...newProceeding,
-                        activity: e.target.value
-                      })}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="result">Resultado:</label>
-                    <textarea
-                      id="result"
-                      value={newProceeding.result}
-                      onChange={(e) => setNewProceeding({
-                        ...newProceeding,
-                        result: e.target.value
-                      })}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="attachment">
-                      <FileUpload size={20} />
-                      Adjuntar documento
-                    </label>
-                    <input
-                      type="file"
-                      id="attachment"
-                      onChange={handleFileChange}
-                      className="file-input"
-                    />
-                  </div>
-                  
-                  <div className="form-actions">
-                    <button type="submit" className="submit-btn">
-                      Guardar Actuación
-                    </button>
-                    <button
-                      type="button"
-                      className="close-button"
-                      onClick={() => setIsActionFormOpen(false)}
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </form>
-              </div>
+             <form onSubmit={handleProceedingSubmit} className="proceeding-form">
+                <h4>Nueva Actuación</h4>
+                <div className="form-group">
+                  <label htmlFor="reportDate">Fecha de Reporte:</label>
+                  <input
+                    type="date"
+                    id="reportDate"
+                    value={newProceeding.reportDate}
+                    onChange={(e) => setNewProceeding({...newProceeding, reportDate: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="activity">Actividad:</label>
+                  <textarea
+                    id="activity"
+                    value={newProceeding.activity}
+                    onChange={(e) => setNewProceeding({...newProceeding, activity: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="result">Resultado:</label>
+                  <textarea
+                    id="result"
+                    value={newProceeding.result}
+                    onChange={(e) => setNewProceeding({...newProceeding, result: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="file">Adjuntar Documento:</label>
+                  <input
+                    type="file"
+                    id="file" accept=".doc,.docx,.pdf,.jpg,.jpeg,.png"
+                    onChange={handleFileChange} 
+                  />
+                </div>
+                <button type="submit" className="submit-button">Registrar Actuación</button>
+              </form>
             </div>
               )}
 
-            {isFormOpen && (
+            {isFormOpen && ( //formulario de registro
           <div className="modal">
             <div className="case-form">
               <h3>Registrar Nuevo Caso</h3>
