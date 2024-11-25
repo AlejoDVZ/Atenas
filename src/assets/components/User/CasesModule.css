@@ -58,28 +58,6 @@ margin-left: 0;
     margin-bottom: 1rem;
   }
   
-  .form-group {
-    color: black;
-    flex: 1;
-    margin-bottom: 1rem;
-  }
-  
-  .form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    color: #0c0c0c;
-  }
-  
-  .form-group input,
-  .form-group select {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #bdc3c7;
-    border-radius: 4px;
-    font-size: 1rem;
-    transition: border-color 0.3s ease;
-  }
   
   .form-group input:focus,
   .form-group select:focus {

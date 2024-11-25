@@ -1,0 +1,67 @@
+.cases-inventory {
+    padding: 20px;
+  }
+  
+  .statistics {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+  }
+  
+  .stat-group {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .stat-group h4 {
+    margin-top: 0;
+    color: #343a40;
+  }
+  
+  .stat-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+  }
+  
+  .download-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .download-button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Custom styles for react-data-table-component */
+  .rdt_Table {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .rdt_TableHead {
+    background-color: #f8f9fa;
+  }
+  
+  .rdt_TableHeadRow {
+    border-bottom: 2px solid #dee2e6;
+  }
+  
+  .rdt_TableBody {
+    background-color: white;
+  }
+  
+  .rdt_TableRow {
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .rdt_Pagination {
+    border-top: 1px solid #e9ecef;
+  }

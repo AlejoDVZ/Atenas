@@ -3,7 +3,10 @@ import './UserDashboard.css';
 import {useNavigate} from "react-router-dom";
 import { jwtDecode } from 'jwt-decode';
 import CasesModule from './User/CasesModule'; 
- 
+import CasesInventoryModule from './User/CasesInventoryModule';
+import { LogOut } from 'lucide-react';
+
+
 export default function UserDashboard() {
 
   const navigate = useNavigate();
@@ -31,6 +34,7 @@ export default function UserDashboard() {
                 } else {
                     // Si el token es válido, establecer el estado
                     setCurrentUsername(decodedToken.name);
+                    console.log(currentUser);
                     setUserID(decodedToken.id);
                     console.log(userID);
                     setUserDef(decodedToken.defensoria)
@@ -54,37 +58,41 @@ export default function UserDashboard() {
 
 
   return (
-    <div className="user-dashboard">
-      <header className="dashboard-header">
-        <div className="logo-container">
-          <img src={'/LOGO-DP-a-610px.png'} alt="Logo Defensa Pública de Venezuela" className="logo" />
+    <div className="container-fluid vh-100 d-flex flex-column">
+      <header className="row bg-dark text-white py-3">
+        <div className="col-md-3">
+          <img src='/LOGO-DP-a-610px.png' alt="Logo Defensa Pública de Venezuela" className="img-fluid" style={{ maxHeight: '60px' }} />
         </div>
-        <div className="user-info">
-          <span>{currentUser}</span>
-          <div className="logout">
-            <button onClick={handleLogout}>
-            <img className='logout' src={"/logout.svg"} alt="" />
-          </button></div>
+        <div className="col-md-9 d-flex justify-content-end align-items-center">
+          <p className="me-3 mb-0">{currentUser}</p>
+          <button onClick={handleLogout} className="btn btn-outline-light">
+            <LogOut size={20} />
+          </button>
         </div>
       </header>
       
-      <div className="dashboard-content">
-      <div className="dashboard-module">
-        <button 
-          className={`module ${activeModule === "dashboard" ? "active" : ""}`} 
-          onClick={() => setActiveModule("personal")}
-        >
-          Gestión de Personal
-        </button>
-        <button 
-          className={`module ${activeModule === "defensorias" ? "active" : ""}`} 
-          onClick={() => setActiveModule("defensorias")}
-        >
-          Gestión de Defensorías
-        </button>
-      </div>
-        {activeModule === "dashboard" && <CasesModule id={userID} def={userDef} />}
-        {activeModule === "defensorias" && <Calendar />}
+      <div className="row flex-grow-1">
+        <nav className="col-md-2 bg-light p-0">
+          <div className="list-group list-group-flush h-100">
+            <button 
+              className={`list-group-item list-group-item-action ${activeModule === "dashboard" ? "active" : ""}`} 
+              onClick={() => setActiveModule("dashboard")}
+            >
+              Gestión de Casos
+            </button>
+            <button 
+              className={`list-group-item list-group-item-action ${activeModule === "inventario" ? "active" : ""}`} 
+              onClick={() => setActiveModule("inventario")}
+            >
+              Inventario de Causas
+            </button>
+          </div>
+        </nav>
+        
+        <main className="col-md-10 bg-white p-3">
+          {activeModule === "dashboard" && <CasesModule id={userID} def={userDef} />}
+          {activeModule === "inventario" && <CasesInventoryModule id={userID} def={userDef} />}
+        </main>
       </div>
     </div>
   );

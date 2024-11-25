@@ -47,33 +47,36 @@ export const Login = () => {
     
   return (
     <>
-    <div className="logo-container">
-        <img src="/LOGO-DP-a-610px.png" alt="" className="logo" />
+    <div className="container-fluid vh-100 bg-dark text-light">
+        <div className="logo-container p-3">
+            <img src="/LOGO-DP-a-610px.png" alt="" className="logo" />
+        </div>
+        
+        <div className=" mx-auto form w-50 border border-3 border-warning rounded-4 p-5 d-flex flex-column align-content-center justify-content-center"  >
+            <form action="" className="text-center form  d-flex flex-column align-content-center justify-content-center">
+                <h1 className="fw-bold">
+                    Bienvenido a Atenas!
+                </h1>
+                <h2>
+                    Ingrese sus credenciales
+                </h2>
+                <div className="form-group text-start">
+                    <div className="input-group d-flex justify-content-center " >
+                        <label htmlFor='mail' className="form-label ps-2 text-light">Correo</label>
+                        <input className=" form-control" type="email" id='mail' name='mail' required value={email} onChange={(e) => setEmail(e.target.value)}/>
+                    </div>
+                    <div className="input-group d-flex " >
+                        <label htmlFor='password' className="ps-2 text-light">Contraseña</label>
+                        <input className="form-control " type="password" id='password' name='password' required value={password} onChange={(e) => setPassword(e.target.value)}/>
+                    </div>
+                </div>
+                <button type="submit" className="align-self-center btn-primary text-light" onClick={handleSubmit}>
+                    Ingresar
+                    </button>
+            </form>
+        </div>
     </div>
     
-    <div className="formulario" >
-    <form action="">
-        <h1>
-            Bienvenido a Atenas!
-        </h1>
-        <h2>
-            Ingrese sus credenciales
-        </h2>
-        <div className="form-group">
-        <div className="input-group" >
-            <label htmlFor='mail'>Correo</label>
-            <input type="text" id='mail' name='mail' required value={email} onChange={(e) => setEmail(e.target.value)}/>
-        </div>
-        <div className="input-group" >
-            <label htmlFor='password'>Contraseña</label>
-            <input type="password" id='password' name='password' required value={password} onChange={(e) => setPassword(e.target.value)}/>
-        </div>
-        </div>
-        <button type="submit" onClick={handleSubmit}>
-            Ingresar
-            </button>
-    </form>
-    </div>
     </>
   )
 }

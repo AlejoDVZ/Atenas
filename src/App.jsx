@@ -1,5 +1,4 @@
 
-import './App.css'
 import Login from "./assets/components/Login.jsx"
 
 function App() {

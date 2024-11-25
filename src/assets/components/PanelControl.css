@@ -23,29 +23,6 @@
     margin-bottom: 20px;
   }
   
-  .tabs {
-    display: flex;
-    border-bottom: 1px solid #ccc;
-    margin-bottom: 20px;
-    justify-content: space-evenly;
-  }
-  
-  .tab {
-    padding: 10px 20px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 16px;
-    color: antiquewhite;
-  }
-  
-  .tab.active {
-    border-bottom: 2px solid #007bff;
-    color: #007bff;
-    background: #ccc;
-    border-radius: 15px;
-  }
-  
   .tab-content {
     padding: 20px 0;
   }
