@@ -3,8 +3,10 @@ import { Edit, Plus, Upload } from 'lucide-react';
 import './CasesModule.css';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Swal from 'sweetalert2';
+import { Button } from 'react-bootstrap';
 
-export default function CasesModule(props) {
+function CasesModule(props) {
 
   const validateDocument = (document) => {
     const documentRegex = /^\d{7,8}$/; // Debe ser un número de 7 u 8 dígitos
@@ -13,15 +15,14 @@ export default function CasesModule(props) {
   const today = new Date();
   const minDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
   const { id, def } = props;
-  const [isEditingDefendant, setIsEditingDefendant] = useState(false);
-  const [editingDefendant, setEditingDefendant] = useState(null);
+  
   const [cases, setCases] = useState([]);
+  const [showDefendantForm,setShowDefendantForm] =useState(false);
   const [fiscalias, setFiscalias] = useState([]);
   const [detentionCenters, setDetentionCenters] = useState([]);
   const [SelectedCase, setSelectedCase] = useState(null);
-  const [SelectEditedCase, setSelectEditedCase] = useState(null);
   const [defendants, setDefendants] = useState([]);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [califications, setCalifications] = useState([]);
   const [documentTypes, setDocumentTypes] = useState([]);
   const [educationLevels, setEducationLevels] = useState([]);
   const [proceedings, setProceedings] = useState([]);
@@ -32,7 +33,8 @@ export default function CasesModule(props) {
     activity: '',
     result: ''
   });
-  const [isActionFormOpen, setIsActionFormOpen] = useState(false);
+  const [editingDefendant, setEditingDefendant] = useState(null);
+  const [isEditingDefendant, setIsEditingDefendant] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [newCase, setNewCase] = useState({
     numberCausa: '',
@@ -56,7 +58,44 @@ export default function CasesModule(props) {
     }],
   });
   const [statusOptions, setStatusOptions] = useState([]);
-  const [isChangingStatus, setIsChangingStatus] = useState(false);
+  const [showCaseDetails, setShowCaseDetails] = useState(false);
+  const [showNewCaseForm, setShowNewCaseForm] = useState(false);
+  const [showProceedingForm, setShowProceedingForm] = useState(false);
+
+  const handleEditDefendant = (defendant) => {
+    setEditingDefendant(defendant);
+    setIsEditingDefendant(true);
+  };
+
+  const handleDefendantUpdateSubmit = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const status = formData.get('status');
+    const updates = {
+      captureOrder: status === 'captureOrder',
+      stablisment: status === 'detained' ? formData.get('stablisment') : null,
+      arrestedDate: status === 'detained' ? formData.get('arrestedDate') : null,
+    };
+    handleDefendantUpdate(editingDefendant.id, updates);
+    setIsEditingDefendant(false);
+    setEditingDefendant(null);
+  };
+
+  const handleCaseClick = (caseItem) => {
+    setSelectedCase(caseItem);
+    setShowCaseDetails(true);
+  };
+
+  const handleNewProceedingClick = () => {
+    setShowCaseDetails(false);
+    setShowProceedingForm(true);
+  };
+  const handleAddDefendantClick = () => {
+
+    setShowCaseDetails(!showCaseDetails);
+    setShowDefendantForm(!showDefendantForm)
+  
+  };
 
   useEffect(() => {
     if (def) {
@@ -65,6 +104,7 @@ export default function CasesModule(props) {
       fetchFiscalias();
       fetchDetentionCenters();
       fetchStatusOptions();
+      fetchCalifications();
       LoadCases(def);
     }
   }, [def]);
@@ -76,6 +116,7 @@ export default function CasesModule(props) {
     }
   }, [SelectedCase]);
 
+
 const handleProceedingChange = (e) => {
     const { name, value } = e.target;
     setNewProceeding(prev => ({ ...prev, [name]: value }));
@@ -84,6 +125,20 @@ const handleProceedingChange = (e) => {
   const handleFileChange = (event) => {
     setSelectedFile(event.target.files[0]);
   };
+
+  const fetchCalifications = async () => {
+    try {
+      const response = await fetch('http://localhost:3300/common/calificaciones', {
+        method: 'GET'
+      });
+      const data = await response.json();
+      setCalifications(data); // Guardar las calificaciones en el estado
+    } catch (error) {
+      console.error('Error fetching califications:', error);
+    }
+
+  };
+
   const fetchStatusOptions = async () => {
     try {
       const response = await fetch('http://localhost:3300/common/status', {
@@ -272,7 +327,7 @@ const handleProceedingChange = (e) => {
     try {
 
       for (const defendant of newCase.defendants) {
-        if (defendant.typeDocument !== 'indocumentado' && !validateDocument(defendant.document)) {
+        if (defendant.typeDocument !== '3' && !validateDocument(defendant.document)) {
           alert('El documento debe ser un número con 7 o 8 dígitos.');
           return;
         }
@@ -325,7 +380,7 @@ const handleProceedingChange = (e) => {
           detentionDate: ''
         }],
       });
-      setIsFormOpen(false);
+      setShowNewCaseForm(false);
       LoadCases(def);
     } catch (error) {
       console.error('Error:', error);
@@ -356,13 +411,14 @@ const handleProceedingChange = (e) => {
         const result = await response.json();
         console.log(result.message);
         loadProceedings(SelectedCase.id);
-        setIsActionFormOpen(false);
         setNewProceeding({
           reportDate: '',
           activity: '',
           result: '',
         });
         setSelectedFile(null);
+        setShowProceedingForm(false);
+        setShowCaseDetails(true);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -403,7 +459,6 @@ const handleProceedingChange = (e) => {
   const handleStatusChange = async (e) => {
     if (window.confirm('Seguro de cambiar status?, si lo cierra o termina sera definitivo.')) {
       const newStatus = e.target.value;
-      setIsChangingStatus(true);
 
       try {
         const response = await fetch(`http://localhost:3300/update-status`, {
@@ -415,9 +470,8 @@ const handleProceedingChange = (e) => {
         });
 
         if (response.ok) {
-          const updatedCase = await response.json();
-          setSelectedCase(prevCase => ({ ...prevCase, state: updatedCase.state }));
-          alert(`El caso ha sido actualizado a: ${updatedCase.state}`);
+          
+          alert(`El caso ha sido actualizado`);
           LoadCases(def);
         } else {
           throw new Error('Failed to update case status');
@@ -425,10 +479,7 @@ const handleProceedingChange = (e) => {
       } catch (error) {
         console.error('Error updating case status:', error);
         alert("No se pudo actualizar el estado del caso");
-      } finally {
-        setIsChangingStatus(false);
-        
-      }
+      } 
     }
   };
   const handleDateChange = (date, field) => {
@@ -448,43 +499,119 @@ const handleProceedingChange = (e) => {
   const handleProceedingDateChange = (date) => {
     setNewProceeding(prev => ({ ...prev, reportDate: date }));
   };
+  const [searchTerm, setSearchTerm] = useState('');
+const [selectedStatus, setSelectedStatus] = useState('');
+const [selectedCalification, setSelectedCalification] = useState('');
+const [startDate, setStartDate] = useState(null);
+const [endDate, setEndDate] = useState(null);
 
-  return (
-    <main className="dashboard-main bg-secondary-subtle h-100 p-3">
-      <h2 className='align-self-center text-center'>Casos Actuales</h2>
+const filteredCases = cases.filter((caso) => {
+    const matchesSearchTerm = caso.numberCausa.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = selectedStatus ? String(caso.status) === String(selectedStatus) : true;
+    const matchesCalification = selectedCalification ? String(caso.calification) === String(selectedCalification) : true;
+    const matchesDateRange = (!startDate || new Date(caso.dateB) >= startDate) && (!endDate || new Date(caso.dateB) <= endDate);
+    return matchesSearchTerm && matchesStatus && matchesCalification && matchesDateRange;
+});
+
+return (
+    <main className="dashboard-main bg-dark h-100 p-3">
+        <h2 className='align-self-center text-center text-light'>Casos Actuales</h2>
+        <div className="search-filter mb-3 d-flex flex-row align-items-center border-2 border-bottom border-warning">
+            <div className='col-3 p-2'>
+                <input
+                    className='form-control mb-1'
+                    type="text"
+                    placeholder="Buscar por Numero de Causa"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            <div className='col-2'>
+                <select
+                    className='form-select mb-1'
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                >
+                    <option value="">Estatus</option>
+                    {statusOptions.map((status) => (
+                        <option key={status.id} value={status.id}>{status.option}</option>
+                    ))}
+                </select>
+            </div>
+            <div className='col-2 p-2'>
+                <select
+                    className='form-select mb-1'
+                    value={selectedCalification}
+                    onChange={(e) => setSelectedCalification(e.target.value)}
+                >
+                    <option value="">Calificación</option>
+                    {califications.map((cal) => (
+                        <option key={cal.id} value={cal.id}>{cal.calificacion}</option>
+                    ))}
+                </select>
+            </div>
+            <div className='col-5 p-2'> {/* Contenedor para las fechas */}
+              <div className="d-flex">
+                  <div className="flex-fill me-2">
+                      <DatePicker
+                          selected={startDate}
+                          onChange={(date) => setStartDate(date)}
+                          maxDate={new Date()}
+                          className="form-control"
+                          dateFormat="dd/MM/yyyy"
+                          placeholderText="Desde"
+                          showYearDropdown
+                          scrollableYearDropdown
+                      />
+                  </div>
+                  <div className="flex-fill ">
+                      <DatePicker
+                          selected={endDate}
+                          onChange={(date) => setEndDate(date)}
+                          className="form-control"
+                          dateFormat="dd/MM/yyyy"
+                          placeholderText="Hasta"
+                          maxDate={new Date()} // No permitir seleccionar fechas futuras
+                          showYearDropdown
+                          scrollableYearDropdown
+                      />
+                  </div>
+              </div>
+          </div>
+        </div>
       <div className="case-grid">
-        {cases.length === 0 && !isFormOpen && (
+        {cases.length === 0 && !showNewCaseForm && (
           <div className='no-cases-message'>
             <h1>No hay Casos!</h1>
             <p>Agregue un Caso</p>
           </div>
         )}
 
-        {cases.map(caseItem => (
-          <div className='case-card' key={caseItem.id} onClick={() => {
-          setSelectedCase(caseItem);
-          setSelectEditedCase(caseItem);}} 
-          data-bs-toggle="modal" data-bs-target="#caseDetailModal">
-            <h3>Caso #{caseItem.numberCausa}</h3>
-            <div className="case-info">
-              <p><strong>Inicio:</strong> {formatDate(caseItem.dateB)}</p>
-              <p><strong>Aceptación:</strong> {formatDate(caseItem.dateA)}</p>
-              <p><strong>Calificación:</strong> {caseItem.calification}</p>
-              <p><strong>Asunto:</strong> {caseItem.tribunalRecord}</p>
-              <p><strong>Fiscalía:</strong> {caseItem.fiscalia}</p>
+        {filteredCases.map(caseItem => {
+          const calificationText = califications.find(cal => cal.id === caseItem.calification)?.calificacion || 'N/A';
+          return(
+            <div className='case-card bg-light text-light' key={caseItem.id} onClick={() => handleCaseClick(caseItem)}>
+              <h3>Caso #{caseItem.numberCausa}</h3>
+              <div className="case-info">
+                <p><strong>Inicio:</strong> {formatDate(caseItem.dateB)}</p>
+                <p><strong>Aceptación:</strong> {formatDate(caseItem.dateA)}</p>
+                <p><strong>Calificación:</strong> {calificationText}</p>
+                <p><strong>Asunto:</strong> {caseItem.tribunalRecord}</p>
+                <p><strong>Fiscalía:</strong> {caseItem.fiscalia}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
-        {/* Bootstrap Modal */}
+        {/* Bootstrap Modal de casos de detalles*/}
 
-        {SelectedCase && (
-                <div className="modal fade" id="caseDetailModal" style={{}} tabIndex="-1" aria-labelledby="caseDetailModalLabel" aria-hidden="true">
+        {showCaseDetails && SelectedCase && (
+          <div className="modal" id="caseDetailModal" style={{display: 'block', backgroundColor: 'rgba(0,0,0,0.5)'}} tabIndex="-1" aria-labelledby="caseDetailModalLabel" aria-hidden="true">
                 <div className="modal-dialog modal-xl align-self-lg-center">
                   <div className="modal-content">
                     <div className="modal-header">
                       <h5 className="modal-title" id="caseDetailModalLabel">Detalles del Caso</h5>
-                      <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      <button type="button" className="btn-close" onClick={() => setShowCaseDetails(false)}></button>
                     </div>
                     <div className="modal-body">
                   <div className="">
@@ -504,9 +631,8 @@ const handleProceedingChange = (e) => {
                         </select>
                       </div>
                     </div>
-
                     <div className="case-detail-content">
-                      <div className="case-info-section grid p-3 justify-content- w-100 ">
+                      <div className="case-info-section grid p-3 justify-content- w-100 ">   {/* Sección de datos Basicos */}
                           <div className="info-group g-col-3">
                             <label className='fs-5'>Fecha de inicio</label>
                             <p>{new Date(SelectedCase.dateB).toLocaleDateString()}</p>
@@ -532,9 +658,11 @@ const handleProceedingChange = (e) => {
                             <p>{SelectedCase.tribunalRecord}</p>
                           </div>
                       </div>
-  
-                      <div className="defendants-section">
+                      <div className="defendants-section"> {/* Sección de defendido */}
                         <h3 className='border-bottom border-black pb-2 '>Defendidos</h3>
+                        <Button variant="primary" onClick={handleAddDefendantClick}>
+                           Agregar otro defendido
+                        </Button>
                         <div className="defendants-grid pt-2">
                           {defendants.map((defendant) => {
                             const educationText = educationLevels.find(level => level.id === defendant.education)?.level || 'N/A';
@@ -546,8 +674,7 @@ const handleProceedingChange = (e) => {
                                 <p><strong>Educación:</strong> {educationText}</p>
                                 <p><strong>Estado:</strong> {getLibertyStatus(defendant)}</p>
                                 <button className="edit-button btn btn-warning" onClick={() => {
-                                  setIsEditingDefendant(true);
-                                  setEditingDefendant(defendant);
+                                  handleEditDefendant(defendant);
                                 }}>
                                   <Edit size={16} /> Editar Estado
                                 </button>
@@ -556,14 +683,12 @@ const handleProceedingChange = (e) => {
                           })}
                         </div>
                       </div>
-
-                      <div className="proceedings-section">
+                      <div className="proceedings-section"> {/* Sección de procedminiento */}
                         <div className="proceedings-header">
                           <h3>Actuaciones</h3>
                           <button
                             className="add-proceeding-button btn btn-primary"
-                            onClick={() => setIsActionFormOpen(true)}
-                          >
+                            onClick={handleNewProceedingClick}>
                             <Plus size={20} />
                             Nueva actuación
                           </button>
@@ -614,84 +739,81 @@ const handleProceedingChange = (e) => {
                   </div>
             </div>
           </div>
-          </div>
-        )}
-            
+          </div>)}
 
-        {isEditingDefendant && (
+          {isEditingDefendant && editingDefendant && (
+            <div className="modal" style={{display: 'block', backgroundColor: 'rgba(0,0,0,0.5)'}}>
+              <div className="modal-dialog modal-lg modal-dialog-centered">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <h5 className="modal-title">Editar Estado de {editingDefendant.name} {editingDefendant.lastname}</h5>
+                    <button type="button" className="btn-close" onClick={() => setIsEditingDefendant(false)}></button>
+                  </div>
+                  <div className="modal-body">
+                    <form onSubmit={handleDefendantUpdateSubmit}>
+                      <div className="mb-3">
+                        <label htmlFor="status" className="form-label">Estado</label>
+                        <select
+                          name="status"
+                          className="form-select"
+                          defaultValue={editingDefendant.stablisment ? 'detained' : (editingDefendant.captureOrder ? 'captureOrder' : 'free')}
+                          onChange={(e) => {
+                            const detainedFields = document.querySelectorAll('.detained-field');
+                            detainedFields.forEach(field => {
+                              field.style.display = e.target.value === 'detained' ? 'block' : 'none';
+                            });
+                          }}
+                        >
+                          <option value="free">Libre</option>
+                          <option value="captureOrder">Libre con orden de captura</option>
+                          <option value="detained">Detenido</option>
+                        </select>
+                      </div>
+                      <div className="mb-3 detained-field" style={{ display: editingDefendant.stablisment ? 'block' : 'none' }}>
+                        <label htmlFor="stablisment" className="form-label">Centro de Detención</label>
+                        <select name="stablisment" className="form-select">
+                          {detentionCenters.map((center) => (
+                            <option key={center.id} value={center.id}>{center.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="mb-3 detained-field" style={{ display: editingDefendant.stablisment ? 'block' : 'none' }}>
+                        <label htmlFor="arrestedDate" className="form-label">Fecha de Detención</label>
+                        <DatePicker
+                          id="date"
+                          name="arrestedDate"
+                          selected={newCase.dateB}
+                          maxDate={new Date()}
+                          className="form-control"
+                          defaultValue={editingDefendant.arrestedDate}
+                          showYearDropdown
+                          yearDropdownItemNumber={15}
+                          scrollableYearDropdown
+                          dateFormat="dd/MM/yyyy"
+                        />
+                      </div>
+                      <div className="modal-footer">
+                        <button type="submit" className="btn btn-primary">Guardar Cambios</button>
+                        <button type="button" className="btn btn-secondary" onClick={() => setIsEditingDefendant(false)}>Cancelar</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+       {showProceedingForm  && (
           <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-lg modal-dialog-centered">
               <div className="modal-content">
                 <div className="modal-header">
-                  <h5 className="modal-title">Editar Estado de {editingDefendant.name} {editingDefendant.lastname}</h5>
-                  <button type="button" className="btn-close" onClick={() => setIsEditingDefendant(false)}></button>
-                </div>
-                <div className="modal-body">
-                  <form onSubmit={(e) => {
-                    e.preventDefault();
-                    const formData = new FormData(e.target);
-                    const status = formData.get('status');
-                    const updates = {
-                      captureOrder: status === 'captureOrder',
-                      stablisment: status === 'detained' ? formData.get('stablisment') : null,
-                      arrestedDate: status === 'detained' ? formData.get('arrestedDate') : null,
-                    };
-                    handleDefendantUpdate(editingDefendant.id, updates);
-                    setIsEditingDefendant(false);
-                  }}>
-                    <div className="mb-3">
-                      <label htmlFor="status" className="form-label">Estado</label>
-                      <select
-                        name="status"
-                        className="form-select"
-                        defaultValue={editingDefendant.stablisment ? 'detained' : (editingDefendant.captureOrder ? 'captureOrder' : 'free')}
-                        onChange={(e) => {
-                          const detainedFields = document.querySelectorAll('.detained-field');
-                          detainedFields.forEach(field => {
-                            field.style.display = e.target.value === 'detained' ? 'block' : 'none';
-                          });
-                        }}
-                      >
-                        <option value="free">Libre</option>
-                        <option value="captureOrder">Libre con orden de captura</option>
-                        <option value="detained">Detenido</option>
-                      </select>
-                    </div>
-                    <div className="mb-3 detained-field" style={{ display: editingDefendant.stablisment ? 'block' : 'none' }}>
-                      <label htmlFor="stablisment" className="form-label">Centro de Detención</label>
-                      <select name="stablisment" className="form-select">
-                        {detentionCenters.map((center) => (
-                          <option key={center.id} value={center.id}>{center.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="mb-3 detained-field" style={{ display: editingDefendant.stablisment ? 'block' : 'none' }}>
-                      <label htmlFor="arrestedDate" className="form-label">Fecha de Detención</label>
-                      <input
-                        type="date"
-                        name="arrestedDate"
-                        className="form-control"
-                        defaultValue={editingDefendant.arrestedDate}
-                      />
-                    </div>
-                    <div className="modal-footer">
-                      <button type="submit" className="btn btn-primary">Guardar Cambios</button>
-                      <button type="button" className="btn btn-secondary" onClick={() => setIsEditingDefendant(false)}>Cancelar</button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {isActionFormOpen && (
-          
-            <div className="modal-dialog modal-lg modal-dialog-centered">
-              <div className="modal-content">
-                <div className="modal-header">
                   <h5 className="modal-title">Nueva Actuación</h5>
-                  <button type="button" className="btn-close" onClick={() => setIsActionFormOpen(false)}></button>
+                  <button type="button" className="btn-close" onClick={() => {
+                    setShowProceedingForm(false);
+                    setShowCaseDetails(true);}}>
+
+                  </button>
                 </div>
                 <div className="modal-body">
                   <form onSubmit={handleProceedingSubmit}>
@@ -705,6 +827,10 @@ const handleProceedingChange = (e) => {
                         maxDate={new Date()}
                         className="form-control"
                         required
+                        showYearDropdown
+                        yearDropdownItemNumber={15}
+                        scrollableYearDropdown
+                        dateFormat="dd/MM/yyyy"
                       />
                     </div>
                     <div className="mb-3 input-group">
@@ -714,7 +840,7 @@ const handleProceedingChange = (e) => {
                         id="activity"
                         name="activity"
                         className="form-control"
-value={newProceeding.activity}
+                        value={newProceeding.activity}
                         onChange={handleProceedingChange}
                         required
                       />
@@ -722,7 +848,7 @@ value={newProceeding.activity}
                     <div className="mb-3 input-group">
                       <label htmlFor="result" className="form-label">Resultado:</label>
                       <input
-type='text'
+                        type='text'
                         id="result"
                         name="result"
                         className="form-control"
@@ -744,7 +870,8 @@ type='text'
                     <div className="modal-footer">
                       <button type="submit" className="btn btn-primary">Registrar Actuación</button>
                       <button type="button" className="btn btn-secondary" onClick={() => {
-                        setIsActionFormOpen(false);
+                        setShowProceedingForm(false);
+                        setShowCaseDetails(true);;
                         setNewProceeding({
                           reportDate: null,
                           activity: '',
@@ -756,15 +883,16 @@ type='text'
                 </div>
               </div>
             </div>
+          </div>
         )}
 
-        {isFormOpen && (
+        {showNewCaseForm && (
           <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-xl modal-dialog-centered">
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">Registrar Nuevo Caso</h5>
-                  <button type="button" className="btn-close" onClick={() => setIsFormOpen(false)}></button>
+                  <button type="button" className="btn-close" onClick={() => setShowNewCaseForm(false)}></button>
                 </div>
                 <div className="modal-body">
                   <form onSubmit={handleSubmit}>
@@ -788,6 +916,10 @@ type='text'
                           onChange={(date) => handleDateChange(date, 'dateB')}
                           maxDate={new Date()}
                           className="form-control"
+                          showYearDropdown
+                          yearDropdownItemNumber={15}
+                          scrollableYearDropdown
+                          dateFormat="dd/MM/yyyy"
                           required
                         />
                       </div>
@@ -802,6 +934,10 @@ type='text'
                           minDate={newCase.dateB}
                           maxDate={new Date()}
                           className="form-control"
+                          showYearDropdown
+                          yearDropdownItemNumber={15}
+                          scrollableYearDropdown
+                          dateFormat="dd/MM/yyyy"
                           required
                         />
                       </div>
@@ -819,15 +955,19 @@ type='text'
                     </div>
                     <div className="mb-3">
                       <label htmlFor="calification" className="form-label">Calificación Jurídica:</label>
-                      <input
-                        type="text"
+                      <select
                         id="calification"
-                        className="form-control"
+                        className="form-select"
                         value={newCase.calification}
                         onChange={(e) => setNewCase({ ...newCase, calification: e.target.value })}
                         required
-                      />
-                    </div>
+                      >
+                        <option value="">Seleccione una calificación</option>
+                        {califications.map(cal => (
+                          <option key={cal.id} value={cal.id}>{cal.calificacion}</option>
+                        ))}
+                    </select>
+                  </div>
                     <div className="mb-3">
                       <label htmlFor="fiscalia" className="form-label">Fiscalía:</label>
                       <select
@@ -883,13 +1023,12 @@ type='text'
                               required
                             >
                               <option value="">Seleccione un tipo</option>
-                              <option value="indocumentado">Indocumentado</option>
                               {documentTypes.map((type) => (
                                 <option key={type.id} value={type.id}>{type.type}</option>
                               ))}
                             </select>
                           </div>
-                          {defendant.typeDocument !== 'indocumentado' && (
+                          {defendant.typeDocument !== '3' && (
                             <div className="col-md-6 mb-3">
                               <label htmlFor={`document-${index}`} className="form-label">Número de Documento:</label>
                               <input
@@ -989,6 +1128,10 @@ type='text'
                                 maxDate={new Date()}
                                 minDate={newCase.dateB}
                                 className="form-control"
+                                showYearDropdown
+                                yearDropdownItemNumber={15}
+                                scrollableYearDropdown
+                                dateFormat="dd/MM/yyyy"
                                 required
                               />
                             </div>
@@ -1024,7 +1167,7 @@ type='text'
                     <div className="modal-footer">
                       <button type="submit" className="btn btn-primary">Guardar Caso</button>
                       <button type="button" className="btn btn-secondary" onClick={() => {
-                        setIsFormOpen(false);
+                        setShowNewCaseForm(false);
                         setNewCase({
                           numberCausa: '',
                           dateB: '',
@@ -1051,10 +1194,11 @@ type='text'
           </div>
         )}
 
-        <button className="btn btn-primary position-fixed bottom-0 end-0 m-3" onClick={() => setIsFormOpen(true)}>
+        <button className="btn btn-primary position-fixed bottom-0 end-0 m-3" onClick={() => setShowNewCaseForm(true)}>
           <Plus size={24} />
         </button>
       </div>
     </main>
   )
 }
+export default CasesModule;

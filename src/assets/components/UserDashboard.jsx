@@ -58,7 +58,7 @@ export default function UserDashboard() {
 
 
   return (
-    <div className="container-fluid vh-100 d-flex flex-column">
+    <div className="container-fluid d-flex flex-column">
       <header className="row bg-dark text-white py-3">
         <div className="col-md-3">
           <img src='/LOGO-DP-a-610px.png' alt="Logo Defensa Pública de Venezuela" className="img-fluid" style={{ maxHeight: '60px' }} />
@@ -72,16 +72,16 @@ export default function UserDashboard() {
       </header>
       
       <div className="row flex-grow-1">
-        <nav className="col-md-2 bg-light p-0">
+        <nav className="col-md-2 bg-dark p-0">
           <div className="list-group list-group-flush h-100">
             <button 
-              className={`list-group-item list-group-item-action ${activeModule === "dashboard" ? "active" : ""}`} 
+              className={`list-group-item list-group-item-action ${activeModule === "dashboard" ? "activo" : ""}`} 
               onClick={() => setActiveModule("dashboard")}
             >
               Gestión de Casos
             </button>
             <button 
-              className={`list-group-item list-group-item-action ${activeModule === "inventario" ? "active" : ""}`} 
+              className={`list-group-item list-group-item-action ${activeModule === "inventario" ? "activo" : ""}`} 
               onClick={() => setActiveModule("inventario")}
             >
               Inventario de Causas
@@ -89,7 +89,7 @@ export default function UserDashboard() {
           </div>
         </nav>
         
-        <main className="col-md-10 bg-white p-3">
+        <main className="col-md-10 bg-dark-subbtle p-3">
           {activeModule === "dashboard" && <CasesModule id={userID} def={userDef} />}
           {activeModule === "inventario" && <CasesInventoryModule id={userID} def={userDef} />}
         </main>
