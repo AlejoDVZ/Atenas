@@ -207,3 +207,30 @@ margin-left: 0;
   font-size: large;
 }
 
+/* Estilos para el select según el estado */
+.select-status {
+  color: white; /* Color del texto por defecto */
+}
+
+.select-status.status-1 {
+  border:3px solid #28a745; /* Color para estado 1 (ejemplo: éxito) */
+}
+
+.select-status.status-2 {
+  border: 3px solid #dc3545; /* Color para estado 2 (ejemplo: peligro) */
+}
+
+.select-status.status-3 {
+  border:3px solid #ffc107; /* Color para estado 3 (ejemplo: advertencia) */
+}
+
+/* Estilo para las opciones del select */
+.select-status option {
+  color: rgb(242, 242, 242); /* Color del texto de las opciones */
+}
+
+/* Efecto hover para las opciones */
+.select-status:hover option {
+  background-color: white; /* Color de fondo al pasar el ratón */
+  color: black; /* Color del texto al pasar el ratón */
+}

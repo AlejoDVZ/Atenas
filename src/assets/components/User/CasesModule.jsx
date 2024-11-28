@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { Edit, Plus, Upload } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Edit, Plus } from 'lucide-react';
 import './CasesModule.css';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Swal from 'sweetalert2';
-import { Button } from 'react-bootstrap';
+import { Button, Modal } from 'react-bootstrap';
+import DefendantRegistrationForm from './DefendantRegistrationForm';
+
+
 
 function CasesModule(props) {
 
@@ -67,6 +70,11 @@ function CasesModule(props) {
     setIsEditingDefendant(true);
   };
 
+  const handleAddDefendantClick = () => {
+    setShowDefendantForm(true);
+    setShowCaseDetails(false);
+  };
+
   const handleDefendantUpdateSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -86,15 +94,47 @@ function CasesModule(props) {
     setShowCaseDetails(true);
   };
 
+  const handleDefendantSubmit = async (defendantData) => {
+    try {
+      const response = await fetch('http://localhost:3300/add-defendant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...defendantData,
+          caseId: SelectedCase.id,
+          userId: id,
+        }),
+      });
+  
+      if (response.ok) {
+        const result = await response.json();
+        console.log(result);
+        Swal.fire({
+          icon: 'success',
+          title: 'Éxito',
+          text: 'Defendido agregado exitosamente',
+        });
+        loadDefendants(SelectedCase.id);
+        setShowDefendantForm(false);
+        setShowCaseDetails(true);
+      } else {
+        throw new Error('Error al agregar el defendido');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo agregar el defendido',
+      });
+    }
+  };
+
   const handleNewProceedingClick = () => {
     setShowCaseDetails(false);
     setShowProceedingForm(true);
-  };
-  const handleAddDefendantClick = () => {
-
-    setShowCaseDetails(!showCaseDetails);
-    setShowDefendantForm(!showDefendantForm)
-  
   };
 
   useEffect(() => {
@@ -201,6 +241,7 @@ const handleProceedingChange = (e) => {
         body: JSON.stringify({ defendantId, ...updates }),
       });
       if (response.ok) {
+        Swal.fire({icon:'success',title:'Actualizado con exito!'})
         loadDefendants(SelectedCase.id);
       }
     } catch (error) {
@@ -409,6 +450,7 @@ const handleProceedingChange = (e) => {
 
       if (response.ok) {
         const result = await response.json();
+        Swal.fire({icon:'success',title:'Reporte exitoso!',text:'Actuacion registrada con exito.'});
         console.log(result.message);
         loadProceedings(SelectedCase.id);
         setNewProceeding({
@@ -457,9 +499,20 @@ const handleProceedingChange = (e) => {
   };
 
   const handleStatusChange = async (e) => {
-    if (window.confirm('Seguro de cambiar status?, si lo cierra o termina sera definitivo.')) {
-      const newStatus = e.target.value;
-
+    const newStatus = e.target.value;
+  
+    // Mostrar el cuadro de confirmación
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: '¿Seguro que desea hacerlo?',
+      text: 'Si cierra o termina la causa, no volverá a editarla!',
+      showCancelButton: true, // Mostrar botón de cancelar
+      confirmButtonText: 'Sí, cambiar',
+      cancelButtonText: 'Cancelar',
+    });
+  
+    // Si el usuario confirma, procede a actualizar el estado
+    if (result.isConfirmed) {
       try {
         const response = await fetch(`http://localhost:3300/update-status`, {
           method: 'POST',
@@ -468,20 +521,32 @@ const handleProceedingChange = (e) => {
           },
           body: JSON.stringify({ status: newStatus, caso: SelectedCase.id }),
         });
-
+  
         if (response.ok) {
-          
-          alert(`El caso ha sido actualizado`);
+          Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: 'El caso ha sido actualizado',
+          });
+          const openCase = SelectedCase.id;
           LoadCases(def);
+          setSelectedCase(openCase);
+
+          setSelectedCase() // Llama a tu función para cargar los casos
         } else {
           throw new Error('Failed to update case status');
         }
       } catch (error) {
         console.error('Error updating case status:', error);
-        alert("No se pudo actualizar el estado del caso");
-      } 
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'No se pudo actualizar el estado del caso',
+        });
+      }
     }
   };
+
   const handleDateChange = (date, field) => {
     setNewCase(prev => ({ ...prev, [field]: date }));
   };
@@ -499,7 +564,7 @@ const handleProceedingChange = (e) => {
   const handleProceedingDateChange = (date) => {
     setNewProceeding(prev => ({ ...prev, reportDate: date }));
   };
-  const [searchTerm, setSearchTerm] = useState('');
+const [searchTerm, setSearchTerm] = useState('');
 const [selectedStatus, setSelectedStatus] = useState('');
 const [selectedCalification, setSelectedCalification] = useState('');
 const [startDate, setStartDate] = useState(null);
@@ -579,7 +644,9 @@ return (
               </div>
           </div>
         </div>
+
       <div className="case-grid">
+
         {cases.length === 0 && !showNewCaseForm && (
           <div className='no-cases-message'>
             <h1>No hay Casos!</h1>
@@ -603,92 +670,95 @@ return (
           );
         })}
 
-        {/* Bootstrap Modal de casos de detalles*/}
-
-        {showCaseDetails && SelectedCase && (
-          <div className="modal" id="caseDetailModal" style={{display: 'block', backgroundColor: 'rgba(0,0,0,0.5)'}} tabIndex="-1" aria-labelledby="caseDetailModalLabel" aria-hidden="true">
-                <div className="modal-dialog modal-xl align-self-lg-center">
-                  <div className="modal-content">
-                    <div className="modal-header">
-                      <h5 className="modal-title" id="caseDetailModalLabel">Detalles del Caso</h5>
-                      <button type="button" className="btn-close" onClick={() => setShowCaseDetails(false)}></button>
-                    </div>
-                    <div className="modal-body">
+        {showCaseDetails && SelectedCase && (() => {
+        
+        const calificationText = califications.find(cal => cal.id === SelectedCase.calification)?.calificacion || 'N/A';
+          return(
+          <div className="modal" id="caseDetailModal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1" aria-labelledby="caseDetailModalLabel" aria-hidden="true">
+            <div className="modal-dialog modal-lg align-self-lg-center">
+              <div className="modal-content">
+                <div className="modal-header"> {/* Selector de estado de caso */}
+                  <div className="d-flex h-100 flex-row align-items-center">
+                    <h3 className="mx-2 mb-0 w-100">Estado de Causa: </h3>
+                    <select // Cambiador de estado del caso
+                      className={`form-select select-status status-${SelectedCase.status}`} // Aplicar clase según el estado
+                      value={SelectedCase.status}
+                      onChange={handleStatusChange}
+                    >
+                      {statusOptions.map((status) => (
+                        <option key={status.id} value={status.id}>
+                          {status.state}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button type="button" className="btn-close" onClick={() => setShowCaseDetails(false)}></button>
+                </div>
+                <div className="modal-body">
                   <div className="">
-                    <div className="case-detail-header d-flex flex-row justify-content-between align-items-center">
-                      <div className="d-flex flex-row align-items-center">
-                        <h2 className="me-2">Estado: </h2>
-                        <select  //cambiador de estado del caso
-                          className="form-select"
-                          value={SelectedCase.status}
-                          onChange={handleStatusChange}
-                        >
-                          {statusOptions.map((status) =>   
-                            <option key={status.id} value={status.id}>
-                              {status.state}
-                            </option>
-                          )}
-                        </select>
-                      </div>
+                    <div className="case-detail-header pb-0 d-flex flex-row justify-content-between align-items-center">
+                      {/* Espacio para contenido adicional si es necesario */}
                     </div>
                     <div className="case-detail-content">
-                      <div className="case-info-section grid p-3 justify-content- w-100 ">   {/* Sección de datos Basicos */}
-                          <div className="info-group g-col-3">
-                            <label className='fs-5'>Fecha de inicio</label>
-                            <p>{new Date(SelectedCase.dateB).toLocaleDateString()}</p>
-                          </div>
-                          <div className="info-group g-col-3">
-                            <label className='fs-5'>Fecha de aceptación</label>
-                            <p>{new Date(SelectedCase.dateA).toLocaleDateString()}</p>
-                          </div>                
-                          <div className="info-group g-col-3">
-                            <label className='fs-5'>Fiscalía</label>
-                            <p>Número {SelectedCase.fiscalia || 'N/A'}</p>
-                          </div>
-                          <div className="info-group g-col-4">
-                            <label className='fs-5'>Calificación Jurídica</label>
-                            <p>{SelectedCase.calification}</p>
-                          </div>                                             
-                          <div className="info-group g-col-4">
-                            <label className='fs-5'>Nro Expediente Defensa Pública</label>
-                            <p>{SelectedCase.numberCausa}</p>
-                          </div>
-                          <div className="info-group g-col-4">
-                            <label className='fs-5'>Nro Expediente Tribunal</label>
-                            <p>{SelectedCase.tribunalRecord}</p>
-                          </div>
+
+                      <div className="case-info-section grid p-3 justify-content-center w-100"> {/* Sección de datos Básicos */}
+                      <div className="info-group g-col-3 border-bottom border-danger pb-2">
+                        <label className='fs-6 text-dark'>Fecha de inicio</label>
+                        <p className="text-dark fs-5">{new Date(SelectedCase.dateB).toLocaleDateString()}</p>
                       </div>
-                      <div className="defendants-section"> {/* Sección de defendido */}
-                        <h3 className='border-bottom border-black pb-2 '>Defendidos</h3>
-                        <Button variant="primary" onClick={handleAddDefendantClick}>
-                           Agregar otro defendido
-                        </Button>
+                      <div className="info-group g-col-3 border-bottom border-danger pb-2">
+                        <label className='fs-6 text-dark'>Fecha de aceptación</label>
+                        <p className="text-dark fs-5">{new Date(SelectedCase.dateA).toLocaleDateString()}</p>
+                      </div>
+                      <div className="info-group g-col-3 border-bottom border-danger pb-2">
+                        <label className='fs-6 text-dark'>Fiscalía</label>
+                        <p className="text-dark fs-5">Número {SelectedCase.fiscalia || 'N/A'}</p>
+                      </div>
+                      <div className="info-group g-col-4 border-bottom border-danger pb-2">
+                        <label className='fs-6 text-dark'>Calificación Jurídica</label>
+                        <p className="text-dark fs-5">{calificationText}</p>
+                      </div>
+                      <div className="info-group g-col-4 border-bottom border-danger pb-2">
+                        <label className='fs-6 text-dark'>Nro Expediente Defensa Pública</label>
+                        <p className="text-dark fs-5">{SelectedCase.numberCausa}</p>
+                      </div>
+                      <div className="info-group g-col-4 border-bottom border-danger pb-2">
+                        <label className='fs-6 text-dark'>Nro Expediente Tribunal</label>
+                        <p className="text-dark fs-5">{SelectedCase.tribunalRecord}</p>
+                      </div>
+                      </div>
+
+                      <div className="defendants-section">    
+                        <div className="defendant-header border-bottom border-warning p-2  d-flex flex-row justify-content-between align-content-center">
+                          <h3 className=' '>Defendidos</h3>
+                          <Button variant="primary" onClick={handleAddDefendantClick}>
+                            Agregar otro defendido
+                          </Button>
+                        </div>                                  {/* Sección de defendido */}
+                        
                         <div className="defendants-grid pt-2">
                           {defendants.map((defendant) => {
+                          
                             const educationText = educationLevels.find(level => level.id === defendant.education)?.level || 'N/A';
                             return (
                               <div key={defendant.id} className="card d-flex justify-content-center p-3">
                                 <h4>{defendant.name} {defendant.lastname}</h4>
-                                <p><strong>Documento:</strong> {defendant.typeDocument}-{defendant.document}</p>
+                                <p><strong>Documento:</strong> {defendant.type} {defendant.document}</p>
                                 <p><strong>Fecha de nacimiento:</strong> {formatDate(defendant.birth)}</p>
                                 <p><strong>Educación:</strong> {educationText}</p>
                                 <p><strong>Estado:</strong> {getLibertyStatus(defendant)}</p>
-                                <button className="edit-button btn btn-warning" onClick={() => {
-                                  handleEditDefendant(defendant);
-                                }}>
+                                <button className="edit-button btn btn-warning" onClick={() => handleEditDefendant(defendant)}>
                                   <Edit size={16} /> Editar Estado
                                 </button>
                               </div>
-                            )
+                            );
                           })}
                         </div>
                       </div>
-                      <div className="proceedings-section"> {/* Sección de procedminiento */}
-                        <div className="proceedings-header">
+                      <div className="proceedings-section"> {/* Sección de procedimiento */}
+                        <div className="proceedings-header border-bottom border-warning p-2">
                           <h3>Actuaciones</h3>
-                          <button
-                            className="add-proceeding-button btn btn-primary"
-                            onClick={handleNewProceedingClick}>
+                          <button className=" add-proceeding-button btn btn-primary" onClick={handleNewProceedingClick}>
                             <Plus size={20} />
                             Nueva actuación
                           </button>
@@ -720,7 +790,9 @@ return (
                                         <button
                                           onClick={() => handleDownload(proceeding.attachmentPath)}
                                           className="download-button btn btn-info"
-                                        >Descargar documento</button>
+                                        >
+                                          Descargar documento
+                                        </button>
                                       ) : (
                                         <span>No hay documento adjunto</span>
                                       )}
@@ -736,10 +808,11 @@ return (
                       </div>
                     </div>
                   </div>
-                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          </div>)}
+      );})()}
 
           {isEditingDefendant && editingDefendant && (
             <div className="modal" style={{display: 'block', backgroundColor: 'rgba(0,0,0,0.5)'}}>
@@ -867,11 +940,11 @@ return (
                         accept=".doc,.docx,.pdf,.jpg,.jpeg,.png"
                       />
                     </div>
-                    <div className="modal-footer">
-                      <button type="submit" className="btn btn-primary">Registrar Actuación</button>
-                      <button type="button" className="btn btn-secondary" onClick={() => {
+                    <div className="modal-footer d-flex justify-content-center">
+                      <button type="submit" className="btn btn-primary flex-fill mx-2">Registrar Actuación</button>
+                      <button type="button" className="btn btn-secondary flex-fill mx-2" onClick={() => {
                         setShowProceedingForm(false);
-                        setShowCaseDetails(true);;
+                        setShowCaseDetails(true);
                         setNewProceeding({
                           reportDate: null,
                           activity: '',
@@ -1048,7 +1121,7 @@ return (
                               id={`birth-${index}`}
                               selected={defendant.birth}
                               onChange={(date) => handleDefendantDateChange(date, index, 'birth')}
-                              maxDate={new Date(new Date().setFullYear(new Date().getFullYear() - 18))}
+                              maxDate={minDate}
                               showYearDropdown
                               scrollableYearDropdown
                               yearDropdownItemNumber={100}
@@ -1192,6 +1265,26 @@ return (
               </div>
             </div>
           </div>
+        )}
+
+        {showDefendantForm && (
+          <Modal show={showDefendantForm} onHide={() => setShowDefendantForm(false)} size="lg">
+            <Modal.Header closeButton>
+              <Modal.Title>Agregar Nuevo Defendido</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <DefendantRegistrationForm
+                documentTypes={documentTypes}
+                educationLevels={educationLevels}
+                detentionCenters={detentionCenters}
+                onSubmit={handleDefendantSubmit}
+                onCancel={() => {
+                  setShowDefendantForm(false);
+                  setShowCaseDetails(true);
+                }}
+              />
+            </Modal.Body>
+          </Modal>
         )}
 
         <button className="btn btn-primary position-fixed bottom-0 end-0 m-3" onClick={() => setShowNewCaseForm(true)}>
