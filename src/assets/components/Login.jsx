@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css"
-
+import Swal from "sweetalert2";
 export const Login = () => {
 
     const [email, setEmail] = useState('');
@@ -15,7 +15,7 @@ export const Login = () => {
         if (!email || !password) {
             setError('Campos incompletos');
             console.log(error)
-            alert('Por favor, complete todos los campos.');9
+            Swal.fire({icon:'warning',title: 'Error',text: error});
             return;
         }
         try {
@@ -41,7 +41,7 @@ export const Login = () => {
         } catch (error) {
             console.error('Error:', error);
             setError('Credenciales inválidas'); 
-            alert(error)
+            Swal.fire({icon:'error',title: 'Error',text: error});
         }
     };
     

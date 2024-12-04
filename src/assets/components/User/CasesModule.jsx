@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Edit, Plus } from 'lucide-react';
+import { Edit, Plus, X } from 'lucide-react';
 import './CasesModule.css';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -215,7 +215,7 @@ const handleProceedingChange = (e) => {
       }
     } catch (error) {
       console.error('Error downloading file:', error);
-      alert('Error al descargar el archivo');
+      Swal.fire({icon:'error',title: 'Error',text: 'Error al descargar el archivo'});
     }
   };
 
@@ -369,7 +369,7 @@ const handleProceedingChange = (e) => {
 
       for (const defendant of newCase.defendants) {
         if (defendant.typeDocument !== '3' && !validateDocument(defendant.document)) {
-          alert('El documento debe ser un número con 7 o 8 dígitos.');
+          Swal.fire({icon:'error',title: 'Error',text: 'El documento debe ser un número con 7 o 8 dígitos.'});
           return;
         }
     
@@ -384,7 +384,8 @@ const handleProceedingChange = (e) => {
       });
 
       if (checkResponse.status === 200) {
-        alert('Este caso ya existe para esta defensoría.');
+        Swal.fire({icon:'warning',title: 'Advertencia',text: 'Este caso ya existe.'});
+
         return;
       }
       const response = await fetch('http://localhost:3300/register/newcase', {
@@ -399,7 +400,7 @@ const handleProceedingChange = (e) => {
       const createdCase = await response.json();
       console.log(createdCase);
 
-      alert('Nuevo caso creado con éxito.');
+      Swal.fire({icon:'success',text: 'Caso creado con exito'});
       setNewCase({
         numberCausa: '',
         dateB: '',
@@ -425,7 +426,7 @@ const handleProceedingChange = (e) => {
       LoadCases(def);
     } catch (error) {
       console.error('Error:', error);
-      alert('Ocurrió un error al procesar la solicitud: ' + error.message);
+      Swal.fire({icon:'error',title: 'Error',text: 'Error al crear el caso.'+error.message});
     }
   };
 
@@ -563,6 +564,7 @@ const handleProceedingChange = (e) => {
 
   const handleProceedingDateChange = (date) => {
     setNewProceeding(prev => ({ ...prev, reportDate: date }));
+    console.log(date);
   };
 const [searchTerm, setSearchTerm] = useState('');
 const [selectedStatus, setSelectedStatus] = useState('');
@@ -577,16 +579,26 @@ const filteredCases = cases.filter((caso) => {
     const matchesDateRange = (!startDate || new Date(caso.dateB) >= startDate) && (!endDate || new Date(caso.dateB) <= endDate);
     return matchesSearchTerm && matchesStatus && matchesCalification && matchesDateRange;
 });
+const handleClearFilters = () => {
+  setSearchTerm('');
+  setSelectedStatus('');
+  setSelectedCalification('');
+  setStartDate(null);
+  setEndDate(null);
+};
+const activeStatusOptions = statusOptions.filter(status => 
+  !['Terminada', 'Cerrada Administrativamente'].includes(status.state)
+);
 
 return (
     <main className="dashboard-main bg-dark h-100 p-3">
         <h2 className='align-self-center text-center text-light'>Casos Actuales</h2>
         <div className="search-filter mb-3 d-flex flex-row align-items-center border-2 border-bottom border-warning">
-            <div className='col-3 p-2'>
+            <div className='col-2 p-2'>
                 <input
                     className='form-control mb-1'
                     type="text"
-                    placeholder="Buscar por Numero de Causa"
+                    placeholder="Nro de Causa"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -598,8 +610,8 @@ return (
                     onChange={(e) => setSelectedStatus(e.target.value)}
                 >
                     <option value="">Estatus</option>
-                    {statusOptions.map((status) => (
-                        <option key={status.id} value={status.id}>{status.option}</option>
+                    {activeStatusOptions.map((status) => (
+                        <option key={status.id} value={status.id}>{status.state}</option>
                     ))}
                 </select>
             </div>
@@ -643,9 +655,12 @@ return (
                   </div>
               </div>
           </div>
+          <div className='col-1 p-2'>
+            <Button variant="secondary" onClick={handleClearFilters}>
+              <X size={20} />
+            </Button>
+          </div>
         </div>
-
-      <div className="case-grid">
 
         {cases.length === 0 && !showNewCaseForm && (
           <div className='no-cases-message'>
@@ -653,7 +668,9 @@ return (
             <p>Agregue un Caso</p>
           </div>
         )}
+      <div className="case-grid">
 
+        
         {filteredCases.map(caseItem => {
           const calificationText = califications.find(cal => cal.id === caseItem.calification)?.calificacion || 'N/A';
           return(
@@ -675,7 +692,7 @@ return (
         const calificationText = califications.find(cal => cal.id === SelectedCase.calification)?.calificacion || 'N/A';
           return(
           <div className="modal" id="caseDetailModal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1" aria-labelledby="caseDetailModalLabel" aria-hidden="true">
-            <div className="modal-dialog modal-lg align-self-lg-center">
+            <div className="modal-dialog modal-xl align-self-lg-center">
               <div className="modal-content">
                 <div className="modal-header"> {/* Selector de estado de caso */}
                   <div className="d-flex h-100 flex-row align-items-center">
@@ -780,7 +797,7 @@ return (
                                 </tr>
                               </thead>
                               <tbody>
-                                {proceedings.map((proceeding) => (
+                                {proceedings.slice().reverse().map((proceeding) => (
                                   <tr key={proceeding.id}>
                                     <td>{new Date(proceeding.dateReport).toLocaleDateString()}</td>
                                     <td>{proceeding.actividad}</td>
@@ -876,7 +893,7 @@ return (
             </div>
           )}
 
-       {showProceedingForm  && (
+        {showProceedingForm  && (                                                                   // formulario de registro de actuaciones
           <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-lg modal-dialog-centered">
               <div className="modal-content">
@@ -901,7 +918,6 @@ return (
                         className="form-control"
                         required
                         showYearDropdown
-                        yearDropdownItemNumber={15}
                         scrollableYearDropdown
                         dateFormat="dd/MM/yyyy"
                       />
@@ -959,7 +975,7 @@ return (
           </div>
         )}
 
-        {showNewCaseForm && (
+        {showNewCaseForm && (                                                                // formualrio de un nuevo caso
           <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-xl modal-dialog-centered">
               <div className="modal-content">
@@ -1267,7 +1283,7 @@ return (
           </div>
         )}
 
-        {showDefendantForm && (
+        {showDefendantForm && (                                                     // formualrio de defendidos
           <Modal show={showDefendantForm} onHide={() => setShowDefendantForm(false)} size="lg">
             <Modal.Header closeButton>
               <Modal.Title>Agregar Nuevo Defendido</Modal.Title>

@@ -83,7 +83,7 @@ const handleSubmit = async (e) => {
           const errorData = await response.json(); // Leer el cuerpo de la respuesta
           throw new Error(errorData.message || 'Error en la solicitud'); // Usar el mensaje del servidor
       }
-
+      Swal.fire({icon:'success',title:'Personal registrado'})
       setIsFormOpen(false);
       setNewPersonal({ name: '', lastname: '', typeDocument: '', document: '', role: '', defensoria: '', email: '', number: '', password: '' });
       fetchPersonal();
@@ -158,8 +158,8 @@ const handleDelete = async (id) => {
   }).then(async (result) => { // Aquí se añade async
     if (result.isConfirmed) {
       try {
-        const response = await fetch('http://localhost:3300/delete/personal', {
-          method: 'DELETE',
+        const response = await fetch('http://localhost:3300/disable/personal', {
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
@@ -450,7 +450,7 @@ const filteredPersonal = personal.filter((persona) => {
                 </div>
                 <div className="mb-3 w-75">
                   <label htmlFor="email" className="form-label">Correo Electrónico</label>
-                  <input name="email" type="email" className="form-control" placeholder="Correo Electrónico" required value={newPersonal.email} onChange={handleChange} />
+                  <input name="email" type="email" className="form-control" placeholder="Correo Electrónico" value={newPersonal.email} onChange={handleChange} />
                 </div>
                 <div className="mb-3 w-75">
                   <label htmlFor="password" className="form-label">Contraseña</label>

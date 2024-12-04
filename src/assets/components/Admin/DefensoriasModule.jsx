@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import './DefensoriasModule.css';
+import Swal from 'sweetalert2';
 
 function DefensoriasModule() {
   const [defensorias, setDefensorias] = useState([]);
@@ -33,7 +34,7 @@ function DefensoriasModule() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!newDefensoria.number) {
-      alert('Por favor, complete todos los campos.');
+      Swal.fire({icon:'warning',title: 'Error',text: 'Por favor, complete todos los campos.'});
       return;
     }
     try {
@@ -53,7 +54,7 @@ function DefensoriasModule() {
       setNewDefensoria({ number: '' });
       fetchDefensorias();
     } catch (error) {
-      alert(error);
+      Swal.fire({icon:'error',title: 'Error',text: error});
       console.error('Error al enviar los datos:', error);
     }
   };
@@ -76,7 +77,7 @@ function DefensoriasModule() {
           }),
         });
         if (response.ok) {
-          alert('Defensoria Borrada');
+          Swal.fire({icon:'success',title: 'Defensoria borrada'});
           fetchDefensorias();
           setSelectedDefensoria(null);
         } else {
@@ -84,7 +85,7 @@ function DefensoriasModule() {
         }
       } catch (error) {
         console.error('Error al borrar la Defensoria:', error);
-        alert('Hubo un error al borrar la Defensoria. Por favor, inténtalo de nuevo.');
+        Swal.fire({icon:'error',title: 'Error',text: error});
       }
     }
   };

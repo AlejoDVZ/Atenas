@@ -1,74 +1,121 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
+import { LogOut, Users, Building, Scale, Briefcase, Home } from 'lucide-react';
 import PersonalModule from './Admin/PersonalModule';
 import DefensoriasModule from './Admin/DefensoriasModule';
 import FiscaliasModule from './Admin/FiscaliasModule';
+import DetentionCentersModule from './Admin/DetentionCentersModule';
+import CalificationsModule from './Admin/CalificationsModule';
 import './PanelControl.css';
-import { useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
-import { LogOut, LogOutIcon } from 'lucide-react';
 
 function PanelControl() {
-  const [activeTab, setActiveTab] = useState("personal");
+  const [activeModule, setActiveModule] = useState("personal");
   const navigate = useNavigate();
-  useEffect(()=>{
+
+  useEffect(() => {
     const token = localStorage.getItem('token');
-        if (!token) {
-            navigate('/');
-        } else {
-            const decodedToken = jwtDecode(token);
-            console.log(decodedToken);
-        }
-  },[useNavigate]
-  );
-  const handleLogout = (e) => { //manejo de logout
+    if (!token) {
+      navigate('/');
+    } else {
+      const decodedToken = jwtDecode(token);
+      console.log(decodedToken);
+    }
+  }, [navigate]);
+
+  const handleLogout = (e) => {
     e.preventDefault();
     localStorage.removeItem('token');
     console.log('Usuario cerró sesión');
     navigate("/");
   };
 
+  const renderModule = () => {
+    switch (activeModule) {
+      case "personal":
+        return <PersonalModule />;
+      case "defensorias":
+        return <DefensoriasModule />;
+      case "fiscalias":
+        return <FiscaliasModule />;
+      case "detentionCenters":
+        return <DetentionCentersModule />;
+      case "califications":
+        return <CalificationsModule />;
+      default:
+        return <PersonalModule />;
+    }
+  };
+
   return (
     <div className="container-fluid vh-100">
-      <header className="row bg-dark text-white py-3 justify-content-evenly">
-        <div className="col-md-2">
-          <img src='/LOGO-DP-a-610px.png' alt="Logo Defensa Pública de Venezuela" className="img-fluid" style={{ maxHeight: '60px' }} />
-        </div>
-        <div className="col-md-6">
-          <div className="mt-3 d-flex flex-row nav align-content-center justify-content-evenly">
-            <button 
-              className={`nav-item btn btn-warning ${activeTab === "personal" ? "btn-danger" : ""}`} 
-              onClick={() => setActiveTab("personal")}
-            >
-              Gestión de Personal
-            </button>
-            <button 
-              className={`nav-item btn btn-warning ${activeTab === "defensorias" ? "btn-danger" : ""}`} 
-              onClick={() => setActiveTab("defensorias")}
-            >
-              Gestión de Defensorías
-            </button>
-            <button 
-              className={`nav-item btn btn-warning ${activeTab === "fiscalias" ? "btn-danger" : ""}`} 
-              onClick={() => setActiveTab("fiscalias")}
-            >
-              Gestión de Fiscalias
+      <div className="row h-100">
+        {/* Sidebar */}
+        <nav className="col-md-3 col-lg-2 d-md-block bg-dark sidebar">
+          <div className="position-sticky pt-3">
+            <div className="mb-4">
+              <img src='/LOGO-DP-a-610px.png' alt="Logo Defensa Pública de Venezuela" className="img-fluid" style={{ maxHeight: '60px' }} />
+            </div>
+            <ul className="nav flex-column">
+              <li className="nav-item">
+                <button 
+                  className={`nav-link btn btn-link text-white ${activeModule === "personal" ? "active" : ""}`} 
+                  onClick={() => setActiveModule("personal")}
+                >
+                  <Users className="feather" /> Gestión de Personal
+                </button>
+              </li>
+              <li className="nav-item">
+                <button 
+                  className={`nav-link btn btn-link text-white ${activeModule === "defensorias" ? "active" : ""}`} 
+                  onClick={() => setActiveModule("defensorias")}
+                >
+                  <Building className="feather" /> Gestión de Defensorías
+                </button>
+              </li>
+              <li className="nav-item">
+                <button 
+                  className={`nav-link btn btn-link text-white ${activeModule === "fiscalias" ? "active" : ""}`} 
+                  onClick={() => setActiveModule("fiscalias")}
+                >
+                  <Scale className="feather" /> Gestión de Fiscalías
+                </button>
+              </li>
+              <li className="nav-item">
+                <button 
+                  className={`nav-link btn btn-link text-white ${activeModule === "detentionCenters" ? "active" : ""}`} 
+                  onClick={() => setActiveModule("detentionCenters")}
+                >
+                  <Home className="feather" /> Centros de Reclusión
+                </button>
+              </li>
+              <li className="nav-item">
+                <button 
+                  className={`nav-link btn btn-link text-white ${activeModule === "califications" ? "active" : ""}`} 
+                  onClick={() => setActiveModule("califications")}
+                >
+                  <Briefcase className="feather" /> Calificaciones
+                </button>
+              </li>
+            </ul>
+          </div>
+        </nav>
+
+        {/* Main content */}
+        <main className="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+          <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 className="h2 text-light">Panel de Control</h1>
+            <button onClick={handleLogout} className="btn btn-outline-danger">
+              <LogOut size={20} /> Cerrar Sesión
             </button>
           </div>
-        </div>
-        <div className="col-md-2 d-flex justify-content-end align-items-center">
-          <button onClick={handleLogout} className="btn btn-outline-light">
-            <LogOut size={20} />
-          </button>
-        </div>
-      </header>
-      
-      <div className="tab-content">
-        {activeTab === "personal" && <PersonalModule />}
-        {activeTab === "defensorias" && <DefensoriasModule />}
-        {activeTab === "fiscalias" && <FiscaliasModule/>}
+          
+          {renderModule()}
+        </main>
       </div>
     </div>
   );
 }
 
 export default PanelControl;
+

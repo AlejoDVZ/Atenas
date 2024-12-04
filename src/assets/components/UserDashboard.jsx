@@ -4,6 +4,7 @@ import {useNavigate} from "react-router-dom";
 import { jwtDecode } from 'jwt-decode';
 import CasesModule from './User/CasesModule'; 
 import CasesInventoryModule from './User/CasesInventoryModule';
+import FullCalendarComponent from './User/CalendarModule';
 import { LogOut } from 'lucide-react';
 
 
@@ -86,12 +87,14 @@ export default function UserDashboard() {
             >
               Inventario de Causas
             </button>
+
           </div>
         </nav>
         
         <main className="col-md-10 bg-dark-subbtle p-3">
           {activeModule === "dashboard" && <CasesModule id={userID} def={userDef} />}
           {activeModule === "inventario" && <CasesInventoryModule id={userID} def={userDef} />}
+          
         </main>
       </div>
     </div>

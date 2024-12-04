@@ -266,13 +266,10 @@ export default function CasesInventoryModule({ id, def }) {
 
     // Reuse the header and footer functions
     const addHeader = (doc) => {
-      const logoWidth = 30;
+      const logoWidth = 70;
       const logoHeight = 30;
       doc.addImage('/LOGO-DP-a-610px.png', 'PNG', 14, 10, logoWidth, logoHeight);
       
-      doc.setTextColor(brandColors.red);
-      doc.setFontSize(16);
-      doc.text('DEFENSA PÚBLICA', 50, 25);
       
       doc.setTextColor(brandColors.darkGray);
       doc.setFontSize(10);
@@ -340,16 +337,43 @@ export default function CasesInventoryModule({ id, def }) {
   };
 
   const generateExcelReport = () => {
-    const worksheet = XLSX.utils.json_to_sheet(filteredItems.map(c => ({
+    // Create a new workbook
+    const workbook = XLSX.utils.book_new();
+    
+    // Create a worksheet for the data
+    const worksheet = XLSX.utils.json_to_sheet([]);
+  
+    // Add header information
+    XLSX.utils.sheet_add_aoa(worksheet, [
+      ['DEFENSA PÚBLICA'],
+      [''],
+      ['Nueva Esparta, Sede Porlamar Nueva Esparta'],
+      ['Av. 4 de Mayo, Edif. Torremayo, pb, Sector Genoves, Porlamar.'],
+      ['Teléfonos: 0295-2632352'],
+      ['Porlamar, Parroquia Capital Mariño, Municipio Mariño, Estado Nueva Esparta, 6301, Venezuela'],
+      [''],
+      ['Reporte de Casos'],
+      [''],
+    ], { origin: 'A1' });
+  
+    // Add the case data
+    const caseData = filteredItems.map(c => ({
       'Número de Causa': c.numberCausa,
       'Fecha de Inicio': new Date(c.dateB).toLocaleDateString(),
       'Estado': c.state,
       'Calificación': califications.find(cal => cal.id === c.calification)?.calificacion || 'N/A',
       'Estado de Libertad': c.defendants.map(d => getLibertyStatus(d)).join(', ')
-    })));
-
-    const workbook = XLSX.utils.book_new();
+    }));
+    XLSX.utils.sheet_add_json(worksheet, caseData, { origin: 'A10', skipHeader: false });
+  
+    // Auto-size columns
+    const max_width = filteredItems.reduce((w, r) => Math.max(w, r.numberCausa.length), 10);
+    worksheet['!cols'] = [ { wch: max_width } ];
+  
+    // Add the worksheet to the workbook
     XLSX.utils.book_append_sheet(workbook, worksheet, "Casos");
+  
+    // Write the Excel file
     XLSX.writeFile(workbook, "reporte_casos.xlsx");
   };
 
@@ -539,13 +563,13 @@ export default function CasesInventoryModule({ id, def }) {
 
   return (
     <div className="container-fluid">
-      <h2 className="mt-4 mb-4 text-center text-light border-2 border-bottom border-warning">Inventario de Casos</h2>
+      <h2 className="mt-4 mb-4 text-center text-light border-2 border-bottom border-warning">Inventario de Causas</h2>
 
       <div className="row mb-4">
         <div className="col-md-6">
           <div className="card border-0 h-100">
             <div className="card-header text-white bg-primary">
-              <h4 className="mb-0">Estado de Casos</h4>
+              <h4 className="mb-0">Estado de Causas</h4>
             </div>
             <div className="card-body bg-light  bg-gradient bg-opacity-75">
               {Object.entries(statusStats).map(([status, count]) => (
