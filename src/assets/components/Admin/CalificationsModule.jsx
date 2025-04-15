@@ -39,7 +39,7 @@ function CalificationsModule() {
     console.error('La calificación no puede estar vacía');
     return Swal.fire({ title: 'Falta la calificación', icon: 'error' });
   }
-  
+  console.log(calificacion)
   try {
     const response = await fetch('http://localhost:3300/register/calificacion', {
       method: 'POST',
@@ -58,31 +58,13 @@ function CalificationsModule() {
   } catch (error) {
     console.error('Error adding calification:', error);
     Swal.fire({ title: 'Error', text: 'Error al agregar la calificación', icon: 'error' });
-  } finally {
-    Swal.close();
-  }
+  } 
 };
-
-  const handleEditCalification = async (id, newCalification) => {
-    try {
-      const response = await fetch(`http://localhost:3300/califications/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ calificacion: newCalification }),
-      });
-      if (response.ok) {
-        setEditingCalification(null);
-        fetchCalifications();
-      }
-    } catch (error) {
-      console.error('Error editing calification:', error);
-    }
-  };
 
   const handleDeleteCalification = async (cid) => {
     try {
-      const response = await fetch(`http://localhost:3300/delete/calificacion`, {
-        method: 'DELETE',
+      const response = await fetch(`http://localhost:3300/disable/calificacion`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },

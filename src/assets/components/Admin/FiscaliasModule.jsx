@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Swal from 'sweetalert2';
 import { Plus, Trash2 } from 'lucide-react';
 import './FiscaliaModule.css';
 
@@ -33,7 +34,11 @@ function FiscaliasModule() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!newFiscalia.number) {
-      alert('Por favor, complete todos los campos.');
+      await Swal.fire({
+        title: 'Error',
+        text: 'Por favor, complete todos los campos.',
+        icon: 'error'
+      });
       return;
     }
     try {
@@ -49,12 +54,21 @@ function FiscaliasModule() {
       if (!response.ok) {
         throw new Error('Error en la solicitud');
       }
+      await Swal.fire({
+        title: '¡Éxito!',
+        text: 'Fiscalia registrada correctamente',
+        icon: 'success'
+      });
       setIsFormOpen(false);
       setNewFiscalia({ number: '' });
       fetchFiscalias();
     } catch (error) {
-      alert(error);
       console.error('Error al enviar los datos:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: 'Hubo un error al registrar la Fiscalia',
+        icon: 'error'
+      });
     }
   };
 
@@ -64,10 +78,21 @@ function FiscaliasModule() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('¿Estás seguro de que quieres borrar esta Fiscalia?')) {
+    const result = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: '¿Quieres borrar esta Fiscalia?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, borrar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
       try {
-        const response = await fetch('http://localhost:3300/delete/fiscalia', {
-          method: 'DELETE',
+        const response = await fetch('http://localhost:3300/disable/fiscalia', {
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
@@ -76,7 +101,11 @@ function FiscaliasModule() {
           }),
         });
         if (response.ok) {
-          alert('Fiscalia Borrada');
+          await Swal.fire({
+            title: '¡Borrado!',
+            text: 'La Fiscalia ha sido borrada.',
+            icon: 'success'
+          });
           fetchFiscalias();
           setSelectedFiscalia(null);
         } else {
@@ -84,7 +113,11 @@ function FiscaliasModule() {
         }
       } catch (error) {
         console.error('Error al borrar la Fiscalia:', error);
-        alert('Hubo un error al borrar la Fiscalia. Por favor, inténtalo de nuevo.');
+        await Swal.fire({
+          title: 'Error',
+          text: 'Hubo un error al borrar la Fiscalia. Por favor, inténtalo de nuevo.',
+          icon: 'error'
+        });
       }
     }
   };
@@ -119,7 +152,7 @@ function FiscaliasModule() {
             <div className="modal-body">
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
-                  <input id='number' name="number" className="form-control" placeholder="Numero de la Fiscalia" required value={newFiscalia.number} onChange={handleChange} />
+                  <input id='number' name="number" className="form-control" placeholder="Numero de la Fiscalia" value={newFiscalia.number} onChange={handleChange} />
                 </div>
                 <button type="submit" className="btn btn-primary">Guardar</button>
               </form>

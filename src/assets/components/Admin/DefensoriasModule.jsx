@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import './DefensoriasModule.css';
 import Swal from 'sweetalert2';
@@ -20,10 +20,20 @@ function DefensoriasModule() {
       const response = await fetch('http://localhost:3300/common/defensorias', {
         method: 'GET'
       });
+      if (!response.ok) {
+        throw new Error('Error al obtener las defensorías');
+      }
       const data = await response.json();
       setDefensorias(data);
     } catch (error) {
       console.error('Error fetching defensorias:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error de Conexión',
+        text: `No se pudieron cargar las defensorías: ${error.message || error}`,
+        footer: 'Por favor, verifique su conexión e inténtelo de nuevo.',
+        confirmButtonText: 'Cerrar'
+      });
     }
   };
 
@@ -34,7 +44,12 @@ function DefensoriasModule() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!newDefensoria.number) {
-      Swal.fire({icon:'warning',title: 'Error',text: 'Por favor, complete todos los campos.'});
+      Swal.fire({
+        icon: 'warning',
+        title: 'Campos Incompletos',
+        text: 'Por favor, complete todos los campos requeridos.',
+        confirmButtonText: 'Entendido'
+      });
       return;
     }
     try {
@@ -53,8 +68,20 @@ function DefensoriasModule() {
       setIsFormOpen(false);
       setNewDefensoria({ number: '' });
       fetchDefensorias();
+      Swal.fire({
+        icon: 'success',
+        title: '¡Registro Exitoso!',
+        text: 'La Defensoría ha sido registrada correctamente.',
+        confirmButtonText: 'Continuar'
+      });
     } catch (error) {
-      Swal.fire({icon:'error',title: 'Error',text: error});
+      Swal.fire({
+        icon: 'error',
+        title: 'Error de Registro',
+        text: `No se pudo registrar la Defensoría: ${error.message || error}`,
+        footer: 'Por favor, inténtelo de nuevo más tarde.',
+        confirmButtonText: 'Cerrar'
+      });
       console.error('Error al enviar los datos:', error);
     }
   };
@@ -65,7 +92,18 @@ function DefensoriasModule() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('¿Estás seguro de que quieres borrar esta Defensoria?')) {
+    const result = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: "No podrás revertir esta acción",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, borrar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
       try {
         const response = await fetch('http://localhost:3300/delete/defensoria', {
           method: 'DELETE',
@@ -77,7 +115,12 @@ function DefensoriasModule() {
           }),
         });
         if (response.ok) {
-          Swal.fire({icon:'success',title: 'Defensoria borrada'});
+          Swal.fire({
+            icon: 'success',
+            title: '¡Eliminado!',
+            text: 'La Defensoría ha sido eliminada correctamente.',
+            confirmButtonText: 'Continuar'
+          });
           fetchDefensorias();
           setSelectedDefensoria(null);
         } else {
@@ -85,7 +128,13 @@ function DefensoriasModule() {
         }
       } catch (error) {
         console.error('Error al borrar la Defensoria:', error);
-        Swal.fire({icon:'error',title: 'Error',text: error});
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al Eliminar',
+          text: `No se pudo eliminar la Defensoría: ${error.message || error}`,
+          footer: 'Por favor, inténtelo de nuevo más tarde.',
+          confirmButtonText: 'Cerrar'
+        });
       }
     }
   };
@@ -120,7 +169,7 @@ function DefensoriasModule() {
             <div className="modal-body">
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
-                  <input id='number' name="number" className="form-control" placeholder="Numero de la defensoría" required value={newDefensoria.number} onChange={handleChange} />
+                  <input id='number' name="number" className="form-control" placeholder="Numero de la defensoría" value={newDefensoria.number} onChange={handleChange} />
                 </div>
                 <button type="submit" className="btn btn-primary">Guardar</button>
               </form>

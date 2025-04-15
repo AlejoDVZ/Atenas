@@ -6,6 +6,7 @@ function DetentionCentersModule() {
   const [centers, setCenters] = useState([]);
   const [filteredCenters, setFilteredCenters] = useState([]);
   const [newCenter, setNewCenter] = useState('');
+  const [showInactive, setShowInactive] = useState(false); // State for showing inactive centers
   const [editingCenter, setEditingCenter] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -14,15 +15,13 @@ function DetentionCentersModule() {
   }, []);
 
   useEffect(() => {
-    const filtered = centers.filter(center => 
-      center.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filtered = getFilteredCenters();
     setFilteredCenters(filtered);
-  }, [searchTerm, centers]);
+  }, [searchTerm, centers, showInactive]);
 
   const fetchCenters = async () => {
     try {
-      const response = await fetch('http://localhost:3300/common/detentioncenters');
+      const response = await fetch('http://localhost:3300/common/alldetentioncenters');
       const data = await response.json();
       setCenters(data);
       setFilteredCenters(data);
@@ -99,8 +98,8 @@ function DetentionCentersModule() {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`http://localhost:3300/delete/detentioncenter`, {
-          method: 'DELETE',
+        const response = await fetch(`http://localhost:3300/disable/detentioncenter`, {
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json'
           },
@@ -125,11 +124,19 @@ function DetentionCentersModule() {
     setSearchTerm(e.target.value);
   };
 
+  const getFilteredCenters = () => {
+    return centers.filter(center => {
+      const matchesSearch = center.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const isActive = showInactive || center.inactive === 0; // Show inactive if toggled
+      return matchesSearch && isActive;
+    });
+  };
+
   return (
     <div className="container mt-4">
       <h2 className="mb-4 text-light text-center">Gestión de Centros de Reclusión</h2>
       <div className="row mb-4">
-        <div className="col-md-6">
+        <div className="col-md-4">
           <div className="input-group d-flex flex-row">
             <input
               type="text"
@@ -143,7 +150,7 @@ function DetentionCentersModule() {
             </button>
           </div>
         </div>
-        <div className="col-md-6">
+        <div className="col-md-4">
           <div className="input-group d-flex flex-row">
             <span className="input-group-text">
               <Search size={16} />
@@ -157,10 +164,22 @@ function DetentionCentersModule() {
             />
           </div>
         </div>
+        <div className="form-check mb-3 col-md-4">
+        <input
+          type="checkbox"
+          className="form-check-input"
+          id="showInactive"
+          checked={showInactive}
+          onChange={() => setShowInactive(!showInactive)}
+        />
+        <label className="form-check-label text-light ali" htmlFor="showInactive">
+          Mostrar centros inactivos
+        </label>
+      </div>
       </div>
       <ul className="list-group">
         {filteredCenters.map((center) => (
-          <li key={center.id} className="list-group-item d-flex justify-content-between align-items-center">
+          <li key={center.id} className={`list-group-item d-flex justify-content-between align-items-center ${center.inactive === 1 ? 'bg-danger text-white' : ''}`}>
             {editingCenter === center.id ? (
               <input
                 type="text"

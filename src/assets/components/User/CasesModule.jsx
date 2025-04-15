@@ -26,6 +26,9 @@ function CasesModule(props) {
   const [SelectedCase, setSelectedCase] = useState(null);
   const [defendants, setDefendants] = useState([]);
   const [califications, setCalifications] = useState([]);
+  const [allcalifications, setAllCalifications] = useState([]);
+  const [alldetentioncenters, setAllDetentionCenters] = useState([]);
+  const [allfiscalias, setAllFiscalias] = useState([]);
   const [documentTypes, setDocumentTypes] = useState([]);
   const [educationLevels, setEducationLevels] = useState([]);
   const [proceedings, setProceedings] = useState([]);
@@ -82,7 +85,7 @@ function CasesModule(props) {
     const updates = {
       captureOrder: status === 'captureOrder',
       stablisment: status === 'detained' ? formData.get('stablisment') : null,
-      arrestedDate: status === 'detained' ? formData.get('arrestedDate') : null,
+      arrestedDate: status === 'detained' ? editingDefendant.arrestedDate : null,
     };
     handleDefendantUpdate(editingDefendant.id, updates);
     setIsEditingDefendant(false);
@@ -145,6 +148,9 @@ function CasesModule(props) {
       fetchDetentionCenters();
       fetchStatusOptions();
       fetchCalifications();
+      fetchAllCalifications();
+      fetchAllDetentionCenters();
+      fetchAllFiscalias();
       LoadCases(def);
     }
   }, [def]);
@@ -173,6 +179,44 @@ const handleProceedingChange = (e) => {
       });
       const data = await response.json();
       setCalifications(data); // Guardar las calificaciones en el estado
+    } catch (error) {
+      console.error('Error fetching califications:', error);
+    }
+
+  };
+  const fetchAllCalifications = async () => {
+    try {
+      const response = await fetch('http://localhost:3300/common/allcalificaciones', {
+        method: 'GET'
+      });
+      const data = await response.json();
+      setAllCalifications(data); // Guardar las calificaciones en el estado
+    } catch (error) {
+      console.error('Error fetching califications:', error);
+    }
+
+  };
+
+  const fetchAllDetentionCenters = async () => {
+    try {
+      const response = await fetch('http://localhost:3300/common/alldetentioncenters', {
+        method: 'GET'
+      });
+      const data = await response.json();
+      setAllDetentionCenters(data); // Guardar las calificaciones en el estado
+    } catch (error) {
+      console.error('Error fetching califications:', error);
+    }
+
+  };
+
+  const fetchAllFiscalias = async () => {
+    try {
+      const response = await fetch('http://localhost:3300/common/alldetentioncenters', {
+        method: 'GET'
+      });
+      const data = await response.json();
+      setAllFiscalias(data); // Guardar las calificaciones en el estado
     } catch (error) {
       console.error('Error fetching califications:', error);
     }
@@ -241,16 +285,22 @@ const handleProceedingChange = (e) => {
         body: JSON.stringify({ defendantId, ...updates }),
       });
       if (response.ok) {
-        Swal.fire({icon:'success',title:'Actualizado con exito!'})
+        const result = await response.json();
+        Swal.fire({icon:'success', title:'Actualizado con éxito!', text: result.message});
         loadDefendants(SelectedCase.id);
+        setIsEditingDefendant(false);
+        setEditingDefendant(null);
+      } else {
+        throw new Error('Failed to update defendant');
       }
     } catch (error) {
       console.error('Error updating defendant:', error);
+      Swal.fire({icon:'error', title:'Error', text: 'No se pudo actualizar el defendido'});
     }
   };
 
   const getLibertyStatus = (defendant) => {
-    if (defendant.stablisment) {
+    if (defendant.stablisment && defendant.freed === 0) {
       return `Detenido en ${defendant.stablisment} desde ${formatDate(defendant.arrestedDate)}`;
     } else if (defendant.captureOrder) {
       return "Libre con orden de captura";
@@ -672,7 +722,7 @@ return (
 
         
         {filteredCases.map(caseItem => {
-          const calificationText = califications.find(cal => cal.id === caseItem.calification)?.calificacion || 'N/A';
+          const calificationText = allcalifications.find(cal => cal.id === caseItem.calification)?.calificacion || 'N/A';
           return(
             <div className='case-card bg-light text-light' key={caseItem.id} onClick={() => handleCaseClick(caseItem)}>
               <h3>Caso #{caseItem.numberCausa}</h3>
@@ -689,7 +739,7 @@ return (
 
         {showCaseDetails && SelectedCase && (() => {
         
-        const calificationText = califications.find(cal => cal.id === SelectedCase.calification)?.calificacion || 'N/A';
+        const calificationText = allcalifications.find(cal => cal.id === SelectedCase.calification)?.calificacion || 'N/A';
           return(
           <div className="modal" id="caseDetailModal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1" aria-labelledby="caseDetailModalLabel" aria-hidden="true">
             <div className="modal-dialog modal-xl align-self-lg-center">
@@ -870,12 +920,17 @@ return (
                       <div className="mb-3 detained-field" style={{ display: editingDefendant.stablisment ? 'block' : 'none' }}>
                         <label htmlFor="arrestedDate" className="form-label">Fecha de Detención</label>
                         <DatePicker
-                          id="date"
+                          id="arrestedDate"
                           name="arrestedDate"
-                          selected={newCase.dateB}
+                          selected={editingDefendant.arrestedDate ? new Date(editingDefendant.arrestedDate) : null}
+                          onChange={(date) => {
+                            setEditingDefendant({
+                              ...editingDefendant,
+                              arrestedDate: date
+                            });
+                          }}
                           maxDate={new Date()}
                           className="form-control"
-                          defaultValue={editingDefendant.arrestedDate}
                           showYearDropdown
                           yearDropdownItemNumber={15}
                           scrollableYearDropdown

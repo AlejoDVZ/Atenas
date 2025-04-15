@@ -34,6 +34,7 @@ const [Docsearch, setDocSearc] = useState('');
 const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 const [newPassword, setNewPassword] = useState('');
 const [confirmPassword, setConfirmPassword] = useState('');
+const [showInactive, setShowInactive] = useState(false); // Added state for checkbox
 
 useEffect(() => {
   console.log('fetching data');
@@ -95,7 +96,7 @@ const handleSubmit = async (e) => {
 
 const fetchDefensorias = async () => {
   try {
-    const response = await fetch('http://localhost:3300/common/defensorias', {
+    const response = await fetch('http://localhost:3300/common/alldefensorias', {
       method: 'GET'
     });
     const data = await response.json();
@@ -258,6 +259,40 @@ if (validationError) {
   }
 };
 
+const handleActivatePersonal = async (id) => {
+  try {
+    const response = await fetch('http://localhost:3300/activatepersonal', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al activar el personal');
+    }
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Éxito',
+      text: 'Personal activado correctamente',
+    });
+
+    fetchPersonal();
+    setSelectedPersonal(null);
+    setEditedPersonal(null);
+  } catch (error) {
+    console.error('Error al activar el personal:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: error.message || 'Error al activar el personal',
+    });
+  }
+};
+
 const handleChangePassword = async () => {
   // Verificar si los campos están vacíos
   if (!newPassword || newPassword.trim().length === 0) {
@@ -333,7 +368,9 @@ const filteredPersonal = personal.filter((persona) => {
   const matchesDefensoria = selectedDefensoria ? String(persona.defensoria) === String(selectedDefensoria) : true;
   const matchesRole = selectedRole ? persona.role.toLowerCase() === selectedRole.toLowerCase() : true;
   const matchesDocument = `${persona.document}`.includes(Docsearch);
-  return matchesSearchTerm && matchesDefensoria && matchesRole && matchesDocument;});
+  const matchesInactive = showInactive ? true : !persona.inactive;
+  return matchesSearchTerm && matchesDefensoria && matchesRole && matchesDocument && matchesInactive;
+});
 
   return (
     <div className="container-fluid">
@@ -378,15 +415,30 @@ const filteredPersonal = personal.filter((persona) => {
               ))}
             </select>
           </div>
+          <div className="col-md-2 p-2"> {/* Added checkbox */}
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="showInactiveCheckbox"
+                  checked={showInactive}
+                  onChange={(e) => setShowInactive(e.target.checked)}
+                />
+                <label className="form-check-label text-light" htmlFor="showInactiveCheckbox">
+                  Mostrar inactivos
+                </label>
+              </div>
+            </div>
         </div>
       </div>
+
       <div className="row row-cols-3 g-3">
         {filteredPersonal.map((persona) => {   {/* Mapeo de la información de los empleados */}
           const tipoDocumento = documentTypes.find(doc => doc.id === persona.typeDocument);
           const oficina = defensorias.find(def => def.id === persona.defensoria);
             return (
             <div key={persona.id} className="card-wrapper">
-              <div key={persona.id} className="card personal col" onClick={() => {
+              <div key={persona.id} className={`card personal col ${persona.inactive === 1 ? 'bg-danger text-white' : ''}`}  onClick={() => {
                 setSelectedPersonal(persona);
                 setEditedPersonal(persona);
               }}>
@@ -545,6 +597,11 @@ const filteredPersonal = personal.filter((persona) => {
                       <Trash2 size={16} className="me-2" />
                       Borrar
                     </button>
+                    {editedPersonal.inactive === 1 && (
+                      <button type="button" className="btn btn-success" onClick={() => handleActivatePersonal(selectedPersonal.id)}>
+                          Activar
+                      </button>
+                      )}
                   </div>
                 </form>
               )}
